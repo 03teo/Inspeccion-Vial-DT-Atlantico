@@ -17,6 +17,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
  
+<!-- ExcelJS (generación de .xlsx con imágenes embebidas para "Exportar a Excel") -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+ 
 <style>
   :root{
     --bg: #10131a;
@@ -124,13 +127,38 @@
   .search-wrap svg{ position:absolute; left:11px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--text-faint); }
   .search-wrap input{ width:100%; padding:10px 12px 10px 34px; }
  
-  select, input[type=text], input[type=number], input[type=file]{
+  select, input[type=text], input[type=number], input[type=file], textarea{
     background:var(--panel); border:1px solid var(--border); color:var(--text);
     border-radius:var(--radius-sm); padding:9px 10px; font-size:13.5px; font-family:var(--font-ui);
   }
+  textarea{ resize:vertical; min-height:74px; line-height:1.5; }
   select{ cursor:pointer; }
-  .filter-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .filter-row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
   .filter-row select{ min-width:130px; }
+ 
+  /* ---------- selector principal "Vía a consultar" ---------- */
+  .via-consulta-wrap{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    background:var(--panel); border:1px solid var(--accent-dim); border-radius:var(--radius);
+    padding:10px 14px; margin-bottom:14px;
+  }
+  .via-consulta-wrap label{ font-size:11.5px; color:var(--accent); text-transform:uppercase; letter-spacing:.5px; font-weight:700; white-space:nowrap; }
+  .via-consulta-wrap select{ min-width:220px; font-weight:600; border-color:var(--accent-dim); }
+  .via-consulta-hint{ font-size:11.5px; color:var(--text-faint); }
+ 
+  /* ---------- estado de exportación ---------- */
+  .export-status{
+    display:none; align-items:center; gap:10px; background:var(--panel-2); border:1px solid var(--border);
+    border-radius:var(--radius-sm); padding:9px 14px; font-size:12.5px; color:var(--text-dim); margin-bottom:14px;
+    font-family:var(--font-mono);
+  }
+  .export-status.show{ display:flex; }
+  .export-spinner{ width:13px; height:13px; border-radius:50%; border:2px solid var(--border); border-top-color:var(--accent); animation:spin .7s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+ 
+  .card-comentarios{ font-size:12px; color:var(--text-dim); background:var(--bg-soft); border:1px solid var(--border-soft); border-radius:6px; padding:8px 10px; }
+  .card-comentarios dt{ color:var(--text-faint); font-size:10.5px; text-transform:uppercase; letter-spacing:.4px; margin-bottom:3px; }
+  .card-comentarios dd{ margin:0; white-space:pre-wrap; }
  
   .btn{
     display:inline-flex; align-items:center; gap:7px; justify-content:center;
@@ -300,19 +328,41 @@
  
     <!-- ===================== TAB 1: FICHAS TÉCNICAS ===================== -->
     <section class="view active" id="view-fichas">
+      <div class="via-consulta-wrap">
+        <label for="viaConsulta">Vía a consultar</label>
+        <select id="viaConsulta">
+          <option value="">Seleccionar una vía...</option>
+          <option value="__ALL__">Todas las vías</option>
+        </select>
+        <span class="via-consulta-hint">Elige una vía para ver sus fichas, o "Todas las vías" para consultar toda la base de datos.</span>
+      </div>
+ 
       <div class="toolbar">
         <div class="search-wrap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input type="text" id="searchInput" placeholder="Buscar por vía, PR, tipología…" />
         </div>
+        <button class="btn" id="btnExportExcel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v5h5"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M9.5 13.5l2.2 3.2 2.8-4.4"/></svg>
+          Exportar a Excel
+        </button>
         <button class="btn btn-accent" id="btnAddFicha">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Añadir Ficha
         </button>
       </div>
  
+      <div class="export-status" id="exportStatus">
+        <span class="export-spinner"></span>
+        <span id="exportStatusLabel">Preparando exportación…</span>
+      </div>
+ 
       <div class="filter-row">
-        <select id="filterVia"><option value="">Todas las vías</option></select>
+        <select id="filterCalzada">
+          <option value="">Toda calzada</option>
+          <option value="Derecha">Derecha</option>
+          <option value="Izquierda">Izquierda</option>
+        </select>
         <select id="filterCarril"><option value="">Todos los carriles</option></select>
         <select id="filterTipo"><option value="">Todos los tipos de daño</option></select>
         <select id="filterTipologia"><option value="">Todas las tipologías</option></select>
@@ -328,8 +378,8 @@
       <div class="cards-grid" id="cardsGrid"></div>
       <div class="empty-state" id="emptyState" style="display:none;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
-        <h3>No hay fichas para mostrar</h3>
-        <p>Ajusta los filtros o añade una nueva ficha técnica.</p>
+        <h3 id="emptyStateTitle">No hay fichas para mostrar</h3>
+        <p id="emptyStateText">Ajusta los filtros o añade una nueva ficha técnica.</p>
       </div>
     </section>
  
@@ -443,6 +493,12 @@
           <div class="form-group" id="f_repAnchoGroup">
             <label for="f_repAncho">Ancho de reparación (m)</label>
             <input type="number" step="0.01" min="0" id="f_repAncho" />
+          </div>
+ 
+          <div class="form-section-title">Observaciones</div>
+          <div class="form-group full">
+            <label for="f_comentarios">Comentarios y aclaraciones</label>
+            <textarea id="f_comentarios" rows="3" placeholder="Observaciones del levantamiento, aclaraciones, condiciones particulares u otra información relevante…"></textarea>
           </div>
  
           <div class="form-section-title">Fotografías <span class="hint" style="text-transform:none;">(1 a 4 · la primera cargada será la principal)</span></div>
@@ -668,12 +724,11 @@ document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', (
  
 /* ========================= FILTROS (poblar selects) ========================= */
 function populateStaticSelects(){
-  const viaSelects = [document.getElementById('f_via'), document.getElementById('filterVia')];
   VIAS.forEach(via => {
     const optForm = document.createElement('option'); optForm.value = via; optForm.textContent = via;
     document.getElementById('f_via').appendChild(optForm);
-    const optFilter = document.createElement('option'); optFilter.value = via; optFilter.textContent = via;
-    document.getElementById('filterVia').appendChild(optFilter);
+    const optViaConsulta = document.createElement('option'); optViaConsulta.value = via; optViaConsulta.textContent = via;
+    document.getElementById('viaConsulta').appendChild(optViaConsulta);
   });
  
   const tipoForm = document.getElementById('f_tipoDano');
@@ -720,12 +775,14 @@ document.getElementById('f_numCalzadas').addEventListener('change', e => {
 });
  
 ['searchInput'].forEach(id => document.getElementById(id).addEventListener('input', renderCards));
-['filterVia','filterCarril','filterTipologia','filterSeveridad'].forEach(id =>
+['viaConsulta','filterCalzada','filterCarril','filterTipologia','filterSeveridad'].forEach(id =>
   document.getElementById(id).addEventListener('change', renderCards)
 );
 document.getElementById('btnClearFilters').addEventListener('click', () => {
+  // Nota: "Limpiar filtros" no modifica el selector "Vía a consultar" a propósito,
+  // ya que es el control principal de consulta, no un filtro secundario.
   document.getElementById('searchInput').value = '';
-  ['filterVia','filterCarril','filterTipo','filterTipologia','filterSeveridad'].forEach(id => document.getElementById(id).value = '');
+  ['filterCalzada','filterCarril','filterTipo','filterTipologia','filterSeveridad'].forEach(id => document.getElementById(id).value = '');
   updateFilterTipologiaOptions();
   renderCards();
 });
@@ -736,35 +793,63 @@ function renderAll(){
   renderMapMarkers();
 }
  
-function renderCards(){
+/**
+ * Devuelve la lista de fichas que corresponden a la consulta actual
+ * (selector "Vía a consultar" + filtros acumulativos + buscador), ordenada
+ * por PR ascendente. Devuelve null si el usuario aún no ha seleccionado
+ * una vía (estado inicial), para diferenciarlo de "sin resultados".
+ * Esta misma función alimenta tanto las tarjetas en pantalla como la
+ * exportación a Excel, para que ambas muestren siempre los mismos registros.
+ */
+function getFichasConsultadas(){
+  const viaConsulta = document.getElementById('viaConsulta').value;
+  if (!viaConsulta) return null; // aún no se ha elegido una vía
+ 
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
-  const viaF = document.getElementById('filterVia').value;
+  const calzadaF = document.getElementById('filterCalzada').value;
   const carrilF = document.getElementById('filterCarril').value;
   const tipoF = document.getElementById('filterTipo').value;
   const tipologiaF = document.getElementById('filterTipologia').value;
   const sevF = document.getElementById('filterSeveridad').value;
  
   let list = state.fichas.filter(f => {
-    if (viaF && f.via !== viaF) return false;
+    if (viaConsulta !== '__ALL__' && f.via !== viaConsulta) return false;
+    if (calzadaF && f.calzada !== calzadaF) return false;
     if (carrilF && String(f.carril) !== carrilF) return false;
     if (tipoF && f.tipoDano !== tipoF) return false;
     if (tipologiaF && f.tipologia !== tipologiaF) return false;
     if (sevF && f.severidad !== sevF) return false;
     if (q){
-      const hay = `${f.via||''} ${f.pr||''} ${f.tipoDano||''} ${f.tipologia||''} carril ${f.carril||''}`.toLowerCase();
+      const hay = `${f.via||''} ${f.pr||''} ${f.tipoDano||''} ${f.tipologia||''} carril ${f.carril||''} ${f.comentarios||''}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
   });
  
   list.sort((a,b) => (a.via||'').localeCompare(b.via||'') || parsePR(a.pr) - parsePR(b.pr));
+  return list;
+}
  
+function renderCards(){
   const grid = document.getElementById('cardsGrid');
   const empty = document.getElementById('emptyState');
+  const emptyTitle = document.getElementById('emptyStateTitle');
+  const emptyText = document.getElementById('emptyStateText');
   grid.innerHTML = '';
+ 
+  const list = getFichasConsultadas();
+ 
+  if (list === null){
+    empty.style.display = 'block';
+    emptyTitle.textContent = 'Selecciona una vía para visualizar las fichas técnicas.';
+    emptyText.textContent = 'Usa el selector "Vía a consultar" arriba, o elige "Todas las vías" para ver toda la base de datos.';
+    return;
+  }
  
   if (!list.length){
     empty.style.display = 'block';
+    emptyTitle.textContent = 'No hay fichas para mostrar';
+    emptyText.textContent = 'Ajusta los filtros o añade una nueva ficha técnica.';
     return;
   }
   empty.style.display = 'none';
@@ -799,6 +884,11 @@ function buildCardNode(f){
         <dt>Coordenadas</dt><dd>${f.lat!=null && f.lat!=='' ? Number(f.lat).toFixed(5) : '—'}, ${f.lng!=null && f.lng!=='' ? Number(f.lng).toFixed(5) : '—'}</dd>
         <dt>Fotos</dt><dd>${fotos.length}/4</dd>
       </dl>
+      ${f.comentarios && f.comentarios.trim() ? `
+        <dl class="card-comentarios">
+          <dt>Comentarios y aclaraciones</dt>
+          <dd>${escapeHtml(f.comentarios)}</dd>
+        </dl>` : ''}
       ${extras.length ? `
         <button class="btn btn-ghost btn-sm" data-action="toggle-mosaic" data-id="${f.id}" style="align-self:flex-start;">
           ${expanded ? 'Ocultar fotos ▲' : `Ver ${extras.length} foto(s) más ▼`}
@@ -851,6 +941,7 @@ function openFichaModal(id){
   document.getElementById('f_danoAncho').value = f?.danoAncho ?? '';
   document.getElementById('f_repLargo').value = f?.repLargo ?? '';
   document.getElementById('f_repAncho').value = f?.repAncho ?? '';
+  document.getElementById('f_comentarios').value = f?.comentarios ?? ''; // compatible con fichas antiguas sin este campo
  
   state.currentFotos = f?.fotos ? [...f.fotos] : [];
   renderPhotoPreviews();
@@ -936,6 +1027,7 @@ document.getElementById('btnSaveFicha').addEventListener('click', () => {
     danoAncho: fisura ? null : (document.getElementById('f_danoAncho').value !== '' ? parseFloat(document.getElementById('f_danoAncho').value) : null),
     repLargo: document.getElementById('f_repLargo').value !== '' ? parseFloat(document.getElementById('f_repLargo').value) : null,
     repAncho: fisura ? null : (document.getElementById('f_repAncho').value !== '' ? parseFloat(document.getElementById('f_repAncho').value) : null),
+    comentarios: document.getElementById('f_comentarios').value.trim(),
     fotos: [...state.currentFotos]
   };
  
@@ -944,6 +1036,193 @@ document.getElementById('btnSaveFicha').addEventListener('click', () => {
  
   closeFichaModal();
 });
+ 
+/* ========================= EXPORTAR A EXCEL ========================= */
+function getTipologiaCodigo(tipologia){
+  if (!tipologia) return '';
+  const m = String(tipologia).match(/\(([^)]+)\)\s*$/);
+  return m ? m[1] : '';
+}
+ 
+/**
+ * Toma una fotografía ya almacenada como Base64 (dataURL) en Firestore, la
+ * decodifica, y genera una versión redimensionada/comprimida SOLO para el
+ * Excel (la fotografía original en Firestore no se modifica). Devuelve el
+ * base64 listo para ExcelJS junto con sus dimensiones finales.
+ */
+function loadImageForExcel(dataUrl){
+  return new Promise((resolve, reject) => {
+    if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image')){
+      reject(new Error('Formato de imagen no válido'));
+      return;
+    }
+    const img = new Image();
+    img.onload = () => {
+      try{
+        const maxDim = 480;
+        let w = img.width, h = img.height;
+        if (!w || !h){ reject(new Error('Dimensiones de imagen inválidas')); return; }
+        if (w > maxDim || h > maxDim){
+          if (w > h){ h = Math.round(h * maxDim / w); w = maxDim; }
+          else { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const outDataUrl = canvas.toDataURL('image/jpeg', 0.55);
+        resolve({ base64: outDataUrl.split(',')[1], extension: 'jpeg', width: w, height: h });
+      }catch(err){ reject(err); }
+    };
+    img.onerror = () => reject(new Error('No se pudo decodificar la imagen'));
+    img.src = dataUrl;
+  });
+}
+ 
+async function exportToExcel(){
+  if (typeof ExcelJS === 'undefined'){
+    alert('No se pudo cargar la librería de exportación a Excel. Verifica tu conexión a internet e inténtalo de nuevo.');
+    return;
+  }
+ 
+  const list = getFichasConsultadas();
+  if (list === null){
+    alert('Selecciona una vía en "Vía a consultar" antes de exportar (o elige "Todas las vías" para exportar toda la base de datos).');
+    return;
+  }
+  if (!list.length){
+    alert('No hay fichas que coincidan con la consulta actual para exportar.');
+    return;
+  }
+ 
+  const btn = document.getElementById('btnExportExcel');
+  const statusEl = document.getElementById('exportStatus');
+  const statusLabel = document.getElementById('exportStatusLabel');
+  btn.disabled = true;
+  statusEl.classList.add('show');
+  statusLabel.textContent = 'Preparando exportación…';
+ 
+  try{
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'InspecVía';
+    workbook.created = new Date();
+ 
+    const sheet = workbook.addWorksheet('Inspección Vial', {
+      views: [{ state: 'frozen', ySplit: 1 }]
+    });
+ 
+    sheet.columns = [
+      { header:'Vía', key:'via', width:12 },
+      { header:'Latitud', key:'lat', width:13 },
+      { header:'Longitud', key:'lng', width:13 },
+      { header:'Número de calzadas', key:'numCalzadas', width:16 },
+      { header:'Calzada', key:'calzada', width:12 },
+      { header:'PR', key:'pr', width:12 },
+      { header:'Carril', key:'carril', width:9 },
+      { header:'Tipo de daño', key:'tipoDano', width:24 },
+      { header:'Tipología', key:'tipologia', width:34 },
+      { header:'Código de tipología', key:'codigoTipologia', width:16 },
+      { header:'Severidad', key:'severidad', width:12 },
+      { header:'Daño - Largo (m)', key:'danoLargo', width:15 },
+      { header:'Daño - Ancho (m)', key:'danoAncho', width:15 },
+      { header:'Reparación - Largo (m)', key:'repLargo', width:18 },
+      { header:'Reparación - Ancho (m)', key:'repAncho', width:18 },
+      { header:'Comentarios y aclaraciones', key:'comentarios', width:42 },
+      { header:'Número de fotos', key:'numFotos', width:14 },
+      { header:'Foto 1', key:'foto1', width:22 },
+      { header:'Foto 2', key:'foto2', width:22 },
+      { header:'Foto 3', key:'foto3', width:22 },
+      { header:'Foto 4', key:'foto4', width:22 }
+    ];
+ 
+    const headerRow = sheet.getRow(1);
+    headerRow.eachCell(cell => {
+      cell.font = { bold:true, color:{ argb:'FFEAEEF3' } };
+      cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FF232A36' } };
+      cell.alignment = { vertical:'middle', horizontal:'center', wrapText:true };
+    });
+    headerRow.height = 24;
+    sheet.autoFilter = { from: 'A1', to: 'U1' };
+ 
+    const PHOTO_ROW_HEIGHT_PT = 122; // ~163px de alto, dentro del rango 120-200px pedido
+    const PHOTO_COL_INDEX = [17, 18, 19, 20]; // columnas R,S,T,U (0-indexadas) = Foto 1..4
+    const PHOTO_COL_LETTERS = ['R','S','T','U'];
+ 
+    for (let i = 0; i < list.length; i++){
+      const f = list[i];
+      const rowNumber = i + 2;
+      const row = sheet.getRow(rowNumber);
+      row.values = {
+        via: f.via || '',
+        lat: f.lat ?? '',
+        lng: f.lng ?? '',
+        numCalzadas: f.numCalzadas || '',
+        calzada: f.calzada || '',
+        pr: f.pr || '',
+        carril: f.carril || '',
+        tipoDano: f.tipoDano || '',
+        tipologia: f.tipologia || '',
+        codigoTipologia: getTipologiaCodigo(f.tipologia),
+        severidad: f.severidad || '',
+        danoLargo: f.danoLargo ?? '',
+        danoAncho: f.danoAncho ?? '',
+        repLargo: f.repLargo ?? '',
+        repAncho: f.repAncho ?? '',
+        comentarios: f.comentarios || '', // fichas antiguas sin este campo -> cadena vacía
+        numFotos: (f.fotos || []).length
+      };
+      row.getCell('comentarios').alignment = { wrapText:true, vertical:'top', horizontal:'left' };
+      row.getCell('tipologia').alignment = { wrapText:true, vertical:'top' };
+      row.height = PHOTO_ROW_HEIGHT_PT;
+ 
+      const fotos = f.fotos || [];
+      for (let p = 0; p < 4; p++){
+        const src = fotos[p];
+        if (!src) continue;
+        try{
+          const { base64, extension, width, height } = await loadImageForExcel(src);
+          const imageId = workbook.addImage({ base64, extension });
+          const targetHeightPx = 158;
+          const targetWidthPx = Math.min(width * (targetHeightPx / height), 200);
+          sheet.addImage(imageId, {
+            tl: { col: PHOTO_COL_INDEX[p], row: rowNumber - 1 },
+            ext: { width: targetWidthPx, height: targetHeightPx }
+          });
+        }catch(err){
+          console.error('Error al exportar una fotografía (se continúa con el resto):', err);
+          sheet.getCell(`${PHOTO_COL_LETTERS[p]}${rowNumber}`).value = 'Error al exportar imagen';
+        }
+      }
+      statusLabel.textContent = `Procesando fotografías… (${i + 1}/${list.length})`;
+    }
+ 
+    statusLabel.textContent = 'Generando archivo Excel…';
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+ 
+    const viaConsulta = document.getElementById('viaConsulta').value;
+    const viaLabel = viaConsulta === '__ALL__' ? 'Todas_las_Vias' : viaConsulta;
+    const fecha = new Date().toISOString().slice(0, 10);
+    const filename = `Inspeccion_Vial_${viaLabel}_${fecha}.xlsx`;
+ 
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+ 
+    statusLabel.textContent = 'Exportación completada.';
+    setTimeout(() => statusEl.classList.remove('show'), 2500);
+  }catch(err){
+    console.error('Error generando el archivo Excel:', err);
+    statusLabel.textContent = 'Error al generar el Excel.';
+    alert('Ocurrió un error al generar el archivo Excel: ' + err.message);
+    setTimeout(() => statusEl.classList.remove('show'), 3000);
+  }finally{
+    btn.disabled = false;
+  }
+}
+ 
+document.getElementById('btnExportExcel').addEventListener('click', exportToExcel);
  
 /* ========================= MAPA ========================= */
 function initMap(){
@@ -1058,6 +1337,12 @@ function renderPinPickerList(){
  
 /* ========================= ARRANQUE ========================= */
 populateStaticSelects();
+initFirebase();
+initMap();
+renderAll();
+</script>
+</body>
+</html>
 initFirebase();
 initMap();
 renderAll();
