@@ -234,7 +234,11 @@
   /* ---------- modal ---------- */
   .modal-overlay{
     display:none; position:fixed; inset:0; background:rgba(8,10,14,.65); backdrop-filter:blur(2px);
-    z-index:100; align-items:flex-start; justify-content:center; padding:40px 16px; overflow-y:auto;
+    /* Leaflet usa z-index de hasta 1000 en sus controles (.leaflet-top/.leaflet-bottom)
+       y 700 en sus popups; los modales deben quedar muy por encima de eso para que
+       la ficha técnica nunca quede oculta detrás del mapa (pines individuales o
+       agrupados por PR), incluyendo todos sus botones, fotos e interacción. */
+    z-index:5000; align-items:flex-start; justify-content:center; padding:40px 16px; overflow-y:auto;
   }
   .modal-overlay.show{ display:flex; }
   .modal{
@@ -465,6 +469,9 @@
             <label for="f_pr">PR <span class="hint">ej: PR 9+500</span></label>
             <input type="text" id="f_pr" placeholder="PR 9+500" required />
           </div>
+          <div class="form-group full" id="f_coordsSharedHint" style="display:none; background:var(--bg-soft); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; font-size:12px; color:var(--text-dim);">
+            📍 <strong style="color:var(--text);">Ubicación del grupo (compartida):</strong> estas coordenadas se heredan automáticamente del primer daño de este PR y no pueden modificarse aquí.
+          </div>
           <div class="form-group">
             <label for="f_lat">Latitud</label>
             <input type="number" step="any" id="f_lat" placeholder="10.6966" />
@@ -665,7 +672,7 @@ const state = {
   addPinMode: false,
   pendingPinLatLng: null,
   hayReparacion: false,
-  multiRegistro: null // { total, current, pr } cuando se registran varios daños del mismo PR
+  multiRegistro: null // { total, current, pr, lat, lng } cuando se registran varios daños del mismo PR (lat/lng se capturan del primer daño y se comparten con el resto)
 };
 
 let db = null;
@@ -1109,8 +1116,19 @@ function openFichaModal(id){
   const prField = document.getElementById('f_pr');
   prField.value = f?.pr || (multi ? multi.pr : '');
   prField.readOnly = !!multi; // el PR es compartido y no debe modificarse durante el registro múltiple
-  document.getElementById('f_lat').value = f?.lat ?? '';
-  document.getElementById('f_lng').value = f?.lng ?? '';
+
+  // Coordenadas: en un registro múltiple, el primer daño las introduce
+  // normalmente; a partir del segundo daño se heredan automáticamente del
+  // primero y quedan en solo lectura para evitar que distintos daños del
+  // mismo PR terminen en puntos diferentes del mapa.
+  const latField = document.getElementById('f_lat');
+  const lngField = document.getElementById('f_lng');
+  const coordsCompartidas = !!(multi && multi.current > 1);
+  document.getElementById('f_coordsSharedHint').style.display = coordsCompartidas ? 'block' : 'none';
+  latField.readOnly = coordsCompartidas;
+  lngField.readOnly = coordsCompartidas;
+  latField.value = coordsCompartidas ? (multi.lat ?? '') : (f?.lat ?? '');
+  lngField.value = coordsCompartidas ? (multi.lng ?? '') : (f?.lng ?? '');
   document.getElementById('f_numCalzadas').value = f?.numCalzadas || '1';
   document.getElementById('f_calzadaGroup').style.display = (f?.numCalzadas === '2' || f?.numCalzadas === 2) ? 'flex' : 'none';
   document.getElementById('f_calzada').value = f?.calzada || 'Derecha';
@@ -1216,7 +1234,7 @@ document.getElementById('btnContinueCount').addEventListener('click', () => {
       alert('Ingresa el PR común para estos daños.');
       return;
     }
-    state.multiRegistro = { total: n, current: 1, pr };
+    state.multiRegistro = { total: n, current: 1, pr, lat: null, lng: null };
     closeCountModal();
     openFichaModal(null);
   }
