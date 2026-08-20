@@ -302,6 +302,11 @@
   .cluster-popup-item:hover{ border-color:var(--accent-dim); }
   .cluster-popup-item .meta{ display:flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:10.5px; color:var(--text-dim); white-space:nowrap; }
 
+  .view-photos-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:8px; margin-top:12px; }
+  .view-photos-grid img{ width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:8px; border:1px solid var(--border); cursor:zoom-in; }
+  .view-photos-grid .principal{ position:relative; }
+  .view-photos-grid .principal::after{ content:'PRINCIPAL'; position:absolute; bottom:5px; left:5px; background:rgba(16,19,26,.8); color:var(--accent); font-size:9px; font-weight:700; letter-spacing:.3px; padding:2px 5px; border-radius:4px; }
+
   .picker-list{ max-height:280px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-top:10px; }
   .picker-item{ display:flex; justify-content:space-between; align-items:center; padding:9px 12px; background:var(--panel-2); border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; font-size:13px; }
   .picker-item:hover{ border-color:var(--accent-dim); }
@@ -446,6 +451,11 @@
       <form id="fichaForm">
         <div class="form-grid">
 
+          <div class="form-group full" id="fichaMultiProgress" style="display:none; background:var(--bg-soft); border:1px solid var(--accent-dim); border-radius:var(--radius-sm); padding:10px 14px;">
+            <strong style="color:var(--accent); font-size:12.5px; text-transform:uppercase; letter-spacing:.4px;">Registro múltiple</strong>
+            <div class="hint" id="fichaMultiProgressText" style="margin-top:2px;"></div>
+          </div>
+
           <div class="form-section-title">Ubicación</div>
           <div class="form-group">
             <label for="f_via">Vía</label>
@@ -558,6 +568,46 @@
   </div>
 </div>
 
+<!-- ===================== MODAL: CANTIDAD DE DAÑOS ===================== -->
+<div class="modal-overlay" id="countModalOverlay">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <h2>Añadir Ficha Técnica</h2>
+      <button class="btn btn-ghost" id="btnCloseCountModal" type="button">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group full" style="margin-bottom:14px;">
+        <label for="countDanos">¿Cuántos daños se van a registrar?</label>
+        <input type="number" id="countDanos" min="1" step="1" value="1" />
+        <span class="hint">Si registras 2 o más daños en el mismo punto, se pedirá un PR común y luego se completará cada daño por separado (cada uno quedará como una ficha independiente).</span>
+      </div>
+      <div class="form-group full" id="countPrGroup" style="display:none;">
+        <label for="countPr">PR común para estos daños <span class="hint">ej: PR 9+500</span></label>
+        <input type="text" id="countPr" placeholder="PR 9+500" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" type="button" id="btnCancelCount">Cancelar</button>
+      <button class="btn btn-accent" type="button" id="btnContinueCount">Continuar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: FICHA (SOLO VISUALIZACIÓN) ===================== -->
+<div class="modal-overlay" id="fichaViewModalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="fichaViewTitle">Ficha Técnica</h2>
+      <button class="btn btn-ghost" id="btnCloseFichaViewModal" type="button">✕</button>
+    </div>
+    <div class="modal-body" id="fichaViewBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="btnDeleteFromView" type="button">🗑 Eliminar</button>
+      <button class="btn btn-accent" id="btnEditFromView" type="button">✎ Editar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===================== MODAL: PIN PICKER ===================== -->
 <div class="modal-overlay" id="pinModalOverlay">
   <div class="modal" style="max-width:420px;">
@@ -614,7 +664,8 @@ const state = {
   currentFotos: [],
   addPinMode: false,
   pendingPinLatLng: null,
-  hayReparacion: false
+  hayReparacion: false,
+  multiRegistro: null // { total, current, pr } cuando se registran varios daños del mismo PR
 };
 
 let db = null;
@@ -853,14 +904,15 @@ function inferHayReparacion(f){
 }
 
 document.getElementById('f_tipoDano').addEventListener('change', updateFormTipologiaOptions);
-document.getElementById('filterTipo').addEventListener('change', () => { updateFilterTipologiaOptions(); renderCards(); });
+document.getElementById('filterTipo').addEventListener('change', () => { updateFilterTipologiaOptions(); renderCards(); renderMapMarkers(); });
 document.getElementById('f_numCalzadas').addEventListener('change', e => {
   document.getElementById('f_calzadaGroup').style.display = e.target.value === '2' ? 'flex' : 'none';
 });
 
-['searchInput'].forEach(id => document.getElementById(id).addEventListener('input', renderCards));
-['viaConsulta','filterCalzada','filterCarril','filterTipologia','filterSeveridad'].forEach(id =>
-  document.getElementById(id).addEventListener('change', renderCards)
+['searchInput'].forEach(id => document.getElementById(id).addEventListener('input', () => { renderCards(); renderMapMarkers(); }));
+['viaConsulta'].forEach(id => document.getElementById(id).addEventListener('change', renderCards));
+['filterCalzada','filterCarril','filterTipologia','filterSeveridad'].forEach(id =>
+  document.getElementById(id).addEventListener('change', () => { renderCards(); renderMapMarkers(); })
 );
 document.getElementById('btnClearFilters').addEventListener('click', () => {
   // Nota: "Limpiar filtros" no modifica el selector "Vía a consultar" a propósito,
@@ -869,6 +921,7 @@ document.getElementById('btnClearFilters').addEventListener('click', () => {
   ['filterCalzada','filterCarril','filterTipo','filterTipologia','filterSeveridad'].forEach(id => document.getElementById(id).value = '');
   updateFilterTipologiaOptions();
   renderCards();
+  renderMapMarkers();
 });
 
 /* ========================= RENDER: CARDS ========================= */
@@ -912,6 +965,36 @@ function getFichasConsultadas(){
 
   list.sort((a,b) => (a.via||'').localeCompare(b.via||'') || parsePR(a.pr) - parsePR(b.pr));
   return list;
+}
+
+/**
+ * Igual que getFichasConsultadas() pero SIN exigir que se haya seleccionado
+ * una vía en "Vía a consultar": el mapa interactivo es una herramienta de
+ * consulta independiente y debe seguir mostrando pines aunque el usuario no
+ * haya elegido todavía una vía en la pestaña Fichas Técnicas. Sí respeta el
+ * resto de filtros acumulativos (calzada, carril, tipo, tipología, severidad
+ * y buscador), para que los grupos del mapa reflejen exactamente lo filtrado.
+ */
+function getFichasParaMapa(){
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const calzadaF = document.getElementById('filterCalzada').value;
+  const carrilF = document.getElementById('filterCarril').value;
+  const tipoF = document.getElementById('filterTipo').value;
+  const tipologiaF = document.getElementById('filterTipologia').value;
+  const sevF = document.getElementById('filterSeveridad').value;
+
+  return state.fichas.filter(f => {
+    if (calzadaF && f.calzada !== calzadaF) return false;
+    if (carrilF && String(f.carril) !== carrilF) return false;
+    if (tipoF && f.tipoDano !== tipoF) return false;
+    if (tipologiaF && f.tipologia !== tipologiaF) return false;
+    if (sevF && f.severidad !== sevF) return false;
+    if (q){
+      const hay = `${f.via||''} ${f.pr||''} ${f.tipoDano||''} ${f.tipologia||''} carril ${f.carril||''} ${f.comentarios||''}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
 }
 
 function renderCards(){
@@ -1007,10 +1090,25 @@ const fichaModalOverlay = document.getElementById('fichaModalOverlay');
 function openFichaModal(id){
   state.editingId = id || null;
   const f = id ? state.fichas.find(x => x.id === id) : null;
-  document.getElementById('fichaModalTitle').textContent = f ? 'Editar Ficha Técnica' : 'Añadir Ficha Técnica';
+  const multi = !f ? state.multiRegistro : null; // el modo múltiple solo aplica al crear, nunca al editar
+
+  const progressEl = document.getElementById('fichaMultiProgress');
+  if (multi){
+    progressEl.style.display = 'block';
+    document.getElementById('fichaMultiProgressText').textContent = `Daño ${multi.current} de ${multi.total} · PR compartido: ${multi.pr}`;
+    document.getElementById('fichaModalTitle').textContent = `Añadir Ficha Técnica — Daño ${multi.current} de ${multi.total}`;
+  } else {
+    progressEl.style.display = 'none';
+    document.getElementById('fichaModalTitle').textContent = f ? 'Editar Ficha Técnica' : 'Añadir Ficha Técnica';
+  }
+
+  const saveBtn = document.getElementById('btnSaveFicha');
+  saveBtn.textContent = multi ? (multi.current < multi.total ? 'Guardar y continuar' : 'Guardar y finalizar') : 'Guardar Ficha';
 
   document.getElementById('f_via').value = f?.via || VIAS[0];
-  document.getElementById('f_pr').value = f?.pr || '';
+  const prField = document.getElementById('f_pr');
+  prField.value = f?.pr || (multi ? multi.pr : '');
+  prField.readOnly = !!multi; // el PR es compartido y no debe modificarse durante el registro múltiple
   document.getElementById('f_lat').value = f?.lat ?? '';
   document.getElementById('f_lng').value = f?.lng ?? '';
   document.getElementById('f_numCalzadas').value = f?.numCalzadas || '1';
@@ -1062,10 +1160,67 @@ function closeFichaModal(){
   document.getElementById('f_fotos').value = '';
 }
 
-document.getElementById('btnAddFicha').addEventListener('click', () => openFichaModal(null));
-document.getElementById('btnCloseFichaModal').addEventListener('click', closeFichaModal);
-document.getElementById('btnCancelFicha').addEventListener('click', closeFichaModal);
-fichaModalOverlay.addEventListener('click', e => { if (e.target === fichaModalOverlay) closeFichaModal(); });
+/**
+ * Cierra el modal de ficha, pero si hay un registro múltiple en curso pide
+ * confirmación primero: los daños ya guardados de esa serie permanecen en
+ * Firestore (son registros completos y válidos), y solo se descarta el daño
+ * actual (sin guardar) y el resto de la serie que faltaba por registrar.
+ */
+function requestCloseFichaModal(){
+  if (state.multiRegistro){
+    const { current, total } = state.multiRegistro;
+    const msg = current > 1
+      ? `Ya guardaste ${current - 1} de ${total} daño(s) de este PR. Si cancelas ahora, esos registros se conservan, pero no se registrará el daño ${current} actual ni los restantes. ¿Deseas cancelar el registro múltiple?`
+      : '¿Deseas cancelar el registro de este daño?';
+    if (!confirm(msg)) return;
+    state.multiRegistro = null;
+  }
+  closeFichaModal();
+}
+
+document.getElementById('btnAddFicha').addEventListener('click', () => {
+  document.getElementById('countDanos').value = '1';
+  document.getElementById('countPr').value = '';
+  document.getElementById('countPrGroup').style.display = 'none';
+  document.getElementById('countModalOverlay').classList.add('show');
+});
+document.getElementById('btnCloseFichaModal').addEventListener('click', requestCloseFichaModal);
+document.getElementById('btnCancelFicha').addEventListener('click', requestCloseFichaModal);
+fichaModalOverlay.addEventListener('click', e => { if (e.target === fichaModalOverlay) requestCloseFichaModal(); });
+
+/* ---- modal: ¿cuántos daños se van a registrar? ---- */
+const countModalOverlay = document.getElementById('countModalOverlay');
+function closeCountModal(){ countModalOverlay.classList.remove('show'); }
+
+document.getElementById('countDanos').addEventListener('input', e => {
+  const n = parseInt(e.target.value, 10);
+  document.getElementById('countPrGroup').style.display = (n >= 2) ? 'block' : 'none';
+});
+document.getElementById('btnCloseCountModal').addEventListener('click', closeCountModal);
+document.getElementById('btnCancelCount').addEventListener('click', closeCountModal);
+countModalOverlay.addEventListener('click', e => { if (e.target === countModalOverlay) closeCountModal(); });
+
+document.getElementById('btnContinueCount').addEventListener('click', () => {
+  const n = parseInt(document.getElementById('countDanos').value, 10);
+  if (!n || n < 1){
+    alert('Ingresa una cantidad válida de daños (mínimo 1).');
+    return;
+  }
+  if (n === 1){
+    state.multiRegistro = null;
+    closeCountModal();
+    openFichaModal(null);
+  } else {
+    const pr = document.getElementById('countPr').value.trim();
+    if (!pr){
+      alert('Ingresa el PR común para estos daños.');
+      return;
+    }
+    state.multiRegistro = { total: n, current: 1, pr };
+    closeCountModal();
+    openFichaModal(null);
+  }
+});
 
 /* ---- fotos ---- */
 const photoDrop = document.getElementById('photoDrop');
@@ -1150,10 +1305,98 @@ document.getElementById('btnSaveFicha').addEventListener('click', () => {
     fotos: [...state.currentFotos]
   };
 
-  if (state.editingId) updateFicha(state.editingId, data);
-  else addFicha(data);
+  if (state.editingId){
+    updateFicha(state.editingId, data);
+    closeFichaModal();
+  } else if (state.multiRegistro && state.multiRegistro.current < state.multiRegistro.total){
+    // Guarda este daño como ficha independiente y avanza al siguiente
+    // daño de la serie, conservando el mismo PR compartido.
+    addFicha(data);
+    state.multiRegistro.current += 1;
+    openFichaModal(null);
+  } else if (state.multiRegistro){
+    // Último daño de la serie: se guarda como ficha independiente y se
+    // finaliza el registro múltiple.
+    addFicha(data);
+    state.multiRegistro = null;
+    closeFichaModal();
+  } else {
+    addFicha(data);
+    closeFichaModal();
+  }
+});
 
-  closeFichaModal();
+/* ========================= FICHA: MODO SOLO VISUALIZACIÓN ========================= */
+let fichaViewCurrentId = null;
+const fichaViewModalOverlay = document.getElementById('fichaViewModalOverlay');
+
+/**
+ * Muestra una ficha técnica completa en modo solo lectura (usada desde el
+ * mapa: tanto para un pin individual como al seleccionar un daño dentro del
+ * menú de un grupo por PR). No permite editar directamente: ofrece botones
+ * "Editar" y "Eliminar" que reutilizan los mecanismos existentes.
+ */
+function openFichaViewModal(id){
+  const f = state.fichas.find(x => x.id === id);
+  if (!f) return;
+  fichaViewCurrentId = id;
+
+  document.getElementById('fichaViewTitle').textContent = f.tipologia || 'Ficha Técnica';
+
+  const fotos = f.fotos || [];
+  const hayRep = inferHayReparacion(f);
+
+  document.getElementById('fichaViewBody').innerHTML = `
+    <div class="card-title-row" style="margin-bottom:14px; align-items:center;">
+      <div>
+        <div class="card-sub">${escapeHtml(tipoAbrev(f.tipoDano))} · Carril ${escapeHtml(f.carril)}${f.calzada ? ' · Calzada ' + escapeHtml(f.calzada) : ''}</div>
+        <span class="sev-badge sev-${escapeHtml(f.severidad)}" style="margin-top:6px; display:inline-block;">${escapeHtml(f.severidad)}</span>
+      </div>
+      <div class="pr-post"><span class="cap">PR</span><span class="val">${escapeHtml((f.pr||'').replace(/^PR\s*/i,'')) || '—'}</span></div>
+    </div>
+    <dl class="card-fields" style="grid-template-columns:1fr 1fr;">
+      <dt>Vía</dt><dd>${escapeHtml(f.via) || '—'}</dd>
+      <dt>Coordenadas</dt><dd>${f.lat!=null && f.lat!=='' ? Number(f.lat).toFixed(5) : '—'}, ${f.lng!=null && f.lng!=='' ? Number(f.lng).toFixed(5) : '—'}</dd>
+      <dt>Tipo de daño</dt><dd>${escapeHtml(f.tipoDano) || '—'}</dd>
+      <dt>Tipología</dt><dd>${escapeHtml(f.tipologia) || '—'}</dd>
+      <dt>Daño (L×A)</dt><dd>${f.danoLargo ?? '—'} m ${f.danoAncho!=null && f.danoAncho!=='' ? '× ' + f.danoAncho + ' m' : ''}</dd>
+      <dt>Reparación</dt><dd>${hayRep ? `${f.repLargo ?? '—'} m${f.repAncho!=null && f.repAncho!=='' ? ' × ' + f.repAncho + ' m' : ''}` : 'No'}</dd>
+    </dl>
+    ${f.comentarios && f.comentarios.trim() ? `
+      <dl class="card-comentarios" style="margin-top:14px;">
+        <dt>Comentarios y aclaraciones</dt>
+        <dd>${escapeHtml(f.comentarios)}</dd>
+      </dl>` : ''}
+    ${fotos.length ? `
+      <div class="view-photos-grid">
+        ${fotos.map((src, i) => `<div class="${i === 0 ? 'principal' : ''}"><img src="${src}" alt="Foto ${i+1}"/></div>`).join('')}
+      </div>` : `<p style="color:var(--text-faint); font-size:12.5px; margin-top:12px;">Sin fotografías registradas.</p>`}
+  `;
+
+  fichaViewModalOverlay.classList.add('show');
+}
+
+function closeFichaViewModal(){
+  fichaViewModalOverlay.classList.remove('show');
+  fichaViewCurrentId = null;
+}
+
+document.getElementById('btnCloseFichaViewModal').addEventListener('click', closeFichaViewModal);
+fichaViewModalOverlay.addEventListener('click', e => { if (e.target === fichaViewModalOverlay) closeFichaViewModal(); });
+
+document.getElementById('btnEditFromView').addEventListener('click', () => {
+  const id = fichaViewCurrentId;
+  closeFichaViewModal();
+  switchTab('fichas');
+  openFichaModal(id);
+});
+
+document.getElementById('btnDeleteFromView').addEventListener('click', () => {
+  const id = fichaViewCurrentId;
+  if (confirm('¿Eliminar esta ficha técnica? Esta acción no se puede deshacer.')){
+    deleteFicha(id);
+    closeFichaViewModal();
+  }
 });
 
 /* ========================= EXPORTAR A EXCEL ========================= */
@@ -1363,37 +1606,42 @@ function severityRank(sev){
 
 /**
  * Renderiza los pines del mapa usando L.marker + L.divIcon (elementos HTML
- * independientes) en lugar de circleMarker + área de clic superpuesta.
+ * independientes), lo que garantiza que el clic siempre corresponde al pin
+ * que el usuario realmente toca, sin depender del orden de otros pines.
  *
- * Motivo del cambio: con circleMarker, el "hitbox" invisible de un pin podía
- * quedar por encima (en el orden de la capa SVG) del pin visual de OTRO daño
- * cercano, capturando el clic equivocado o impidiendo abrir la ficha correcta.
- * Con divIcon cada pin es su propio elemento del DOM con límites exactos
- * (26×26px de área táctil, con el punto visual de 10px centrado dentro),
- * por lo que el clic siempre corresponde al pin que el usuario realmente toca,
- * sin depender del orden de inserción de otros pines.
+ * AGRUPACIÓN: los daños se agrupan por PR (dentro de la misma vía), que es
+ * el campo ya existente en cada ficha — NO por cercanía geográfica. Un daño
+ * en PR 9+500 y otro en PR 9+550 nunca se agrupan aunque estén muy cerca.
+ * Las fichas sin PR (vacío) nunca se agrupan entre sí: cada una se trata
+ * como un punto individual. La agrupación es puramente visual: cada daño
+ * sigue siendo un documento independiente en Firestore y conserva sus
+ * propias coordenadas (el pin del grupo usa las coordenadas del primer daño
+ * del grupo únicamente para ubicarse en el mapa).
  *
- * Los daños que comparten exactamente las mismas coordenadas (o casi, dentro
- * de ~1 m) se agrupan en un único pin; al hacer clic se muestra una lista para
- * elegir cuál ficha abrir, sin alterar sus coordenadas reales en Firestore.
+ * Respeta los filtros activos (calzada, carril, tipo, tipología, severidad,
+ * buscador) vía getFichasParaMapa(): si el filtro deja un solo daño de un PR
+ * que normalmente tendría varios, ese punto se comporta como pin individual.
  */
 function renderMapMarkers(){
   if (!markersLayer) return;
   markersLayer.clearLayers();
 
-  const valid = state.fichas.filter(f => f.lat != null && f.lng != null && f.lat !== '' && f.lng !== '' && !isNaN(f.lat) && !isNaN(f.lng));
+  const valid = getFichasParaMapa().filter(f => f.lat != null && f.lng != null && f.lat !== '' && f.lng !== '' && !isNaN(f.lat) && !isNaN(f.lng));
 
   const groups = new Map();
+  let sinPrContador = 0;
   valid.forEach(f => {
-    const lat = parseFloat(f.lat), lng = parseFloat(f.lng);
-    const key = `${lat.toFixed(5)}_${lng.toFixed(5)}`; // ~1 m de tolerancia = mismo punto
-    if (!groups.has(key)) groups.set(key, { lat, lng, fichas: [] });
+    const prTrim = (f.pr || '').trim();
+    const key = prTrim ? `${f.via || ''}__${prTrim}` : `__sinpr_${f.id || (sinPrContador++)}`;
+    if (!groups.has(key)) groups.set(key, { pr: prTrim, via: f.via || '', fichas: [] });
     groups.get(key).fichas.push(f);
   });
 
   groups.forEach(group => {
-    const { lat, lng, fichas } = group;
-    const isCluster = fichas.length > 1;
+    const { fichas } = group;
+    const first = fichas[0];
+    const lat = parseFloat(first.lat), lng = parseFloat(first.lng);
+    const isGroup = fichas.length > 1;
     const worst = fichas.reduce((a, b) => severityRank(b.severidad) > severityRank(a.severidad) ? b : a, fichas[0]);
     const color = severityColor(worst.severidad);
 
@@ -1401,7 +1649,7 @@ function renderMapMarkers(){
       html: `
         <div class="map-pin-tap">
           <span class="map-pin-dot" style="background:${color};"></span>
-          ${isCluster ? `<span class="map-pin-count">${fichas.length}</span>` : ''}
+          ${isGroup ? `<span class="map-pin-count">${fichas.length}</span>` : ''}
         </div>
       `,
       className: '', // sin fondo/borde por defecto de Leaflet para divIcon
@@ -1413,19 +1661,20 @@ function renderMapMarkers(){
     // bubblingMouseEvents:false evita que el clic sobre el pin también
     // dispare el clic del mapa (usado por el modo "Añadir Pin").
     const marker = L.marker([lat, lng], { icon, bubblingMouseEvents: false });
-    marker.bindPopup(isCluster ? buildClusterPopupHtml(fichas) : buildPopupHtml(fichas[0]), { maxWidth: 260 });
+    marker.bindPopup(isGroup ? buildGroupPopupHtml(group.pr, fichas) : buildPopupHtml(fichas[0]), { maxWidth: 280 });
     marker.addTo(markersLayer);
   });
 }
 
-function buildClusterPopupHtml(fichas){
+/** Popup para un PR con 2 o más daños: lista de selección (no abre edición). */
+function buildGroupPopupHtml(pr, fichas){
   return `
     <div class="map-popup">
-      <h4>${fichas.length} daños en este punto</h4>
-      <div class="row">Coordenadas coincidentes · selecciona un registro para ver su ficha completa:</div>
+      <h4>PR ${escapeHtml(pr || '—')}</h4>
+      <div class="row">Hay ${fichas.length} daños registrados en este PR. Selecciona uno para ver su ficha:</div>
       <div class="cluster-popup-list">
         ${fichas.map(f => `
-          <div class="cluster-popup-item" onclick="window.editFichaFromMap('${f.id}')">
+          <div class="cluster-popup-item" onclick="window.viewFichaFromMap('${f.id}')">
             <span>${escapeHtml(f.tipologia)}</span>
             <span class="meta">
               <span class="sev-badge sev-${escapeHtml(f.severidad)}" style="padding:1px 6px;">${escapeHtml(f.severidad)}</span>
@@ -1438,6 +1687,7 @@ function buildClusterPopupHtml(fichas){
   `;
 }
 
+/** Popup para un pin individual (único daño en su PR). */
 function buildPopupHtml(f){
   const principal = (f.fotos && f.fotos[0]) || '';
   return `
@@ -1448,16 +1698,17 @@ function buildPopupHtml(f){
       <div class="row">Severidad: <span class="sev-badge sev-${escapeHtml(f.severidad)}" style="padding:2px 7px;">${escapeHtml(f.severidad)}</span></div>
       <div class="row">Daño: ${f.danoLargo ?? '—'} m ${f.danoAncho ? '× ' + f.danoAncho + ' m' : ''}</div>
       <div class="popup-actions">
-        <button class="btn btn-sm" onclick="window.editFichaFromMap('${f.id}')">Ver ficha</button>
+        <button class="btn btn-sm" onclick="window.viewFichaFromMap('${f.id}')">Ver ficha</button>
         <button class="btn btn-sm btn-danger" onclick="window.removePin('${f.id}')">Eliminar pin</button>
       </div>
     </div>
   `;
 }
 
-window.editFichaFromMap = function(id){
-  switchTab('fichas');
-  openFichaModal(id);
+// Al seleccionar un daño desde el mapa (pin individual o menú de grupo) se
+// abre la ficha en modo SOLO VISUALIZACIÓN, nunca directamente en edición.
+window.viewFichaFromMap = function(id){
+  openFichaViewModal(id);
 };
 
 window.removePin = function(id){
