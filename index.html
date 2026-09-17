@@ -1,26 +1,25 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>InspecVía · Base de Datos Técnica de Inspección</title>
-
+ 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
+ 
 <!-- Leaflet (OpenStreetMap) -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
+ 
 <!-- Firebase (compat SDK) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-
+ 
 <!-- ExcelJS (generación de .xlsx con imágenes embebidas para "Exportar a Excel") -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
-
+ 
 <style>
   :root{
     --bg: #10131a;
@@ -49,7 +48,7 @@
     --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
     --shadow: 0 8px 24px rgba(0,0,0,.35);
   }
-
+ 
   *{ box-sizing:border-box; }
   html,body{ height:100%; }
   body{
@@ -70,10 +69,10 @@
   a{ color:inherit; }
   button{ font-family:inherit; }
   :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
-
+ 
   /* ---------- layout shell ---------- */
   .app{ display:flex; flex-direction:column; min-height:100vh; }
-
+ 
   header.topbar{
     position:sticky; top:0; z-index:40;
     background:linear-gradient(180deg, var(--bg-soft), rgba(21,26,34,.92));
@@ -83,6 +82,15 @@
     display:flex; align-items:center; gap:18px; flex-wrap:wrap;
   }
   .brand{ display:flex; align-items:center; gap:10px; margin-right:auto; }
+  /* Logo institucional INVÍAS: tamaño moderado, proporción original intacta
+     (height fija + width:auto), fondo transparente conservado. */
+  .brand-logo{
+    height:32px; width:auto; max-width:150px; object-fit:contain; display:block;
+    padding-right:10px; border-right:1px solid var(--border-soft);
+  }
+  @media (max-width:720px){
+    .brand-logo{ height:26px; max-width:110px; padding-right:8px; }
+  }
   .brand-mark{
     width:34px; height:34px; border-radius:8px;
     background:linear-gradient(155deg, var(--accent), #b9821f);
@@ -92,11 +100,11 @@
   }
   .brand-text h1{ margin:0; font-size:16px; font-weight:700; letter-spacing:.2px; }
   .brand-text p{ margin:0; font-size:11.5px; color:var(--text-dim); font-family:var(--font-mono); letter-spacing:.4px; text-transform:uppercase; }
-
+ 
   .conn{ display:flex; align-items:center; gap:8px; font-family:var(--font-mono); font-size:12px; color:var(--text-dim); padding:6px 10px; border:1px solid var(--border); border-radius:20px; background:var(--panel); }
   .conn-dot{ width:8px; height:8px; border-radius:50%; background:var(--danger); box-shadow:0 0 0 3px rgba(229,72,77,.18); transition:.2s; }
   .conn.is-online .conn-dot{ background:var(--sev-baja); box-shadow:0 0 0 3px rgba(76,175,109,.18); }
-
+ 
   nav.tabs{ display:flex; gap:4px; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:4px; }
   nav.tabs button{
     border:none; background:transparent; color:var(--text-dim); padding:8px 16px;
@@ -107,11 +115,11 @@
   nav.tabs button.active{ background:var(--accent); color:var(--accent-ink); }
   nav.tabs button.active svg{ opacity:1; }
   nav.tabs button:not(.active):hover{ color:var(--text); background:var(--panel-2); }
-
+ 
   main{ flex:1; padding:22px; max-width:1440px; width:100%; margin:0 auto; }
   .view{ display:none; }
   .view.active{ display:block; }
-
+ 
   /* ---------- config banner ---------- */
   .config-banner{
     display:none; align-items:flex-start; gap:12px;
@@ -121,13 +129,13 @@
   }
   .config-banner.show{ display:flex; }
   .config-banner strong{ color:var(--accent); }
-
+ 
   /* ---------- toolbar / filters ---------- */
   .toolbar{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:18px; }
   .search-wrap{ position:relative; flex:1 1 240px; min-width:200px; }
   .search-wrap svg{ position:absolute; left:11px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--text-faint); }
   .search-wrap input{ width:100%; padding:10px 12px 10px 34px; }
-
+ 
   select, input[type=text], input[type=number], input[type=file], textarea{
     background:var(--panel); border:1px solid var(--border); color:var(--text);
     border-radius:var(--radius-sm); padding:9px 10px; font-size:13.5px; font-family:var(--font-ui);
@@ -136,7 +144,7 @@
   select{ cursor:pointer; }
   .filter-row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
   .filter-row select{ min-width:130px; }
-
+ 
   /* ---------- selector principal "Vía a consultar" ---------- */
   .via-consulta-wrap{
     display:flex; align-items:center; gap:10px; flex-wrap:wrap;
@@ -146,7 +154,7 @@
   .via-consulta-wrap label{ font-size:11.5px; color:var(--accent); text-transform:uppercase; letter-spacing:.5px; font-weight:700; white-space:nowrap; }
   .via-consulta-wrap select{ min-width:220px; font-weight:600; border-color:var(--accent-dim); }
   .via-consulta-hint{ font-size:11.5px; color:var(--text-faint); }
-
+ 
   /* ---------- estado de exportación ---------- */
   .export-status{
     display:none; align-items:center; gap:10px; background:var(--panel-2); border:1px solid var(--border);
@@ -156,17 +164,17 @@
   .export-status.show{ display:flex; }
   .export-spinner{ width:13px; height:13px; border-radius:50%; border:2px solid var(--border); border-top-color:var(--accent); animation:spin .7s linear infinite; }
   @keyframes spin{ to{ transform:rotate(360deg); } }
-
+ 
   .card-comentarios{ font-size:12px; color:var(--text-dim); background:var(--bg-soft); border:1px solid var(--border-soft); border-radius:6px; padding:8px 10px; }
   .card-comentarios dt{ color:var(--text-faint); font-size:10.5px; text-transform:uppercase; letter-spacing:.4px; margin-bottom:3px; }
   .card-comentarios dd{ margin:0; white-space:pre-wrap; }
-
+ 
   /* ---------- toggle ¿Hay reparación? ---------- */
   .toggle-group{ display:inline-flex; gap:4px; background:var(--bg-soft); border:1px solid var(--border); border-radius:var(--radius-sm); padding:4px; width:fit-content; }
   .toggle-btn{ border:none; background:transparent; color:var(--text-dim); padding:7px 20px; border-radius:5px; font-size:13px; font-weight:600; cursor:pointer; transition:.15s; font-family:var(--font-ui); }
   .toggle-btn.active{ background:var(--accent); color:var(--accent-ink); }
   .toggle-btn:not(.active):hover{ color:var(--text); background:var(--panel-2); }
-
+ 
   .btn{
     display:inline-flex; align-items:center; gap:7px; justify-content:center;
     border:1px solid var(--border); background:var(--panel-2); color:var(--text);
@@ -184,7 +192,7 @@
   .btn-sm{ padding:6px 10px; font-size:12.5px; }
   .btn-block{ width:100%; }
   .btn[disabled]{ opacity:.5; cursor:not-allowed; }
-
+ 
   /* ---------- kilometer-post "PR" chip (signature element) ---------- */
   .pr-post{
     display:inline-flex; flex-direction:column; align-items:center; font-family:var(--font-mono);
@@ -192,10 +200,10 @@
   }
   .pr-post .cap{ background:var(--accent); color:var(--accent-ink); font-size:9px; font-weight:700; letter-spacing:1px; padding:2px 6px; width:100%; text-align:center; }
   .pr-post .val{ background:var(--panel-2); font-size:12.5px; font-weight:600; padding:3px 8px; }
-
+ 
   /* ---------- cards grid ---------- */
   .cards-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(300px,1fr)); gap:16px; margin-top:16px; }
-
+ 
   .card{
     background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
     overflow:hidden; display:flex; flex-direction:column; transition:.15s;
@@ -205,40 +213,39 @@
   .card-photo svg{ width:34px; height:34px; opacity:.35; }
   .card-photo .sev-badge{ position:absolute; top:10px; left:10px; }
   .card-photo .via-badge{ position:absolute; top:10px; right:10px; background:rgba(16,19,26,.75); backdrop-filter:blur(3px); border:1px solid var(--border); font-family:var(--font-mono); font-size:11px; padding:4px 8px; border-radius:6px; }
-
+ 
   .sev-badge{ font-size:11px; font-weight:700; padding:4px 9px; border-radius:20px; letter-spacing:.3px; }
   .sev-Baja{ background:var(--sev-baja-bg); color:var(--sev-baja); }
   .sev-Media{ background:var(--sev-media-bg); color:var(--sev-media); }
   .sev-Alta{ background:var(--sev-alta-bg); color:var(--sev-alta); }
-
+ 
   .card-body{ padding:14px; display:flex; flex-direction:column; gap:10px; flex:1; }
   .card-title-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
   .card-title{ font-size:14.5px; font-weight:700; }
   .card-sub{ font-size:12px; color:var(--text-dim); font-family:var(--font-mono); }
-
+ 
   .card-fields{ display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; font-size:12.5px; }
   .card-fields dt{ color:var(--text-faint); font-size:10.5px; text-transform:uppercase; letter-spacing:.4px; margin:0; }
   .card-fields dd{ margin:0; color:var(--text); font-weight:500; }
-
+ 
   .mosaic{ display:none; grid-template-columns:repeat(3, 1fr); gap:6px; margin-top:4px; }
   .mosaic.show{ display:grid; }
   .mosaic img{ width:100%; aspect-ratio:1; object-fit:cover; border-radius:6px; border:1px solid var(--border); cursor:pointer; }
-
+ 
   .card-actions{ display:flex; gap:8px; margin-top:auto; padding-top:10px; border-top:1px solid var(--border-soft); }
   .card-actions .btn{ flex:1; }
-
+ 
   .empty-state{ text-align:center; padding:70px 20px; color:var(--text-dim); }
   .empty-state svg{ width:44px; height:44px; opacity:.3; margin-bottom:10px; }
   .empty-state h3{ margin:0 0 6px; color:var(--text); font-size:15px; }
   .empty-state p{ margin:0; font-size:13px; }
-
+ 
   /* ---------- modal ---------- */
   .modal-overlay{
     display:none; position:fixed; inset:0; background:rgba(8,10,14,.65); backdrop-filter:blur(2px);
     /* Leaflet usa z-index de hasta 1000 en sus controles (.leaflet-top/.leaflet-bottom)
-       y 700 en sus popups; los modales deben quedar muy por encima de eso para que
-       la ficha técnica nunca quede oculta detrás del mapa (pines individuales o
-       agrupados por PR), incluyendo todos sus botones, fotos e interacción. */
+       y 700 en sus popups: los modales deben quedar por encima para que la ficha
+       técnica nunca quede oculta detrás del mapa ni el mapa intercepte sus clics. */
     z-index:5000; align-items:flex-start; justify-content:center; padding:40px 16px; overflow-y:auto;
   }
   .modal-overlay.show{ display:flex; }
@@ -251,7 +258,7 @@
   .modal-header h2{ margin:0; font-size:15.5px; }
   .modal-body{ padding:20px; max-height:70vh; overflow-y:auto; }
   .modal-footer{ display:flex; gap:10px; justify-content:flex-end; padding:16px 20px; border-top:1px solid var(--border-soft); }
-
+ 
   .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   .form-group{ display:flex; flex-direction:column; gap:6px; }
   .form-group.full{ grid-column:1 / -1; }
@@ -259,7 +266,7 @@
   .form-group .hint{ font-size:11px; color:var(--text-faint); font-weight:400; text-transform:none; letter-spacing:0; }
   .form-section-title{ grid-column:1/-1; font-size:12px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:.5px; margin:4px 0 -4px; padding-top:8px; border-top:1px solid var(--border-soft); }
   .form-section-title:first-child{ border-top:none; padding-top:0; margin-top:0; }
-
+ 
   .photo-drop{ border:1.5px dashed var(--border); border-radius:var(--radius-sm); padding:16px; text-align:center; cursor:pointer; color:var(--text-dim); font-size:12.5px; transition:.15s; }
   .photo-drop:hover{ border-color:var(--accent-dim); color:var(--text); }
   .photo-previews{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px; }
@@ -267,7 +274,7 @@
   .photo-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
   .photo-thumb .tag{ position:absolute; bottom:3px; left:3px; background:rgba(16,19,26,.8); color:var(--accent); font-size:9px; font-weight:700; padding:2px 5px; border-radius:4px; letter-spacing:.3px; }
   .photo-thumb .rm{ position:absolute; top:3px; right:3px; width:18px; height:18px; border-radius:50%; background:rgba(16,19,26,.85); border:none; color:#fff; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-
+ 
   /* ---------- map view ---------- */
   .map-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
   .legend{ display:flex; align-items:center; gap:14px; font-size:12px; color:var(--text-dim); }
@@ -282,7 +289,7 @@
   .map-popup .row{ font-size:11.5px; color:var(--text-dim); margin-bottom:2px; }
   .map-popup .popup-actions{ display:flex; gap:6px; margin-top:8px; }
   .map-pin-mode-active #mapContainer{ cursor:crosshair; outline:2px solid var(--accent); outline-offset:-2px; }
-
+ 
   /* ---------- pin del mapa (divIcon): punto visual pequeño + área táctil mayor ---------- */
   .map-pin-tap{
     position:relative; width:26px; height:26px;
@@ -301,24 +308,24 @@
     line-height:1; padding:2px 4px; border-radius:8px; border:1px solid var(--accent);
     pointer-events:none;
   }
-
+ 
   .cluster-popup-list{ max-height:240px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-top:8px; }
   .cluster-popup-item{ display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 10px; background:var(--panel-2); border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; font-size:12.5px; }
   .cluster-popup-item:hover{ border-color:var(--accent-dim); }
   .cluster-popup-item .meta{ display:flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:10.5px; color:var(--text-dim); white-space:nowrap; }
-
+ 
   .view-photos-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(130px,1fr)); gap:8px; margin-top:12px; }
   .view-photos-grid img{ width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:8px; border:1px solid var(--border); cursor:zoom-in; }
   .view-photos-grid .principal{ position:relative; }
   .view-photos-grid .principal::after{ content:'PRINCIPAL'; position:absolute; bottom:5px; left:5px; background:rgba(16,19,26,.8); color:var(--accent); font-size:9px; font-weight:700; letter-spacing:.3px; padding:2px 5px; border-radius:4px; }
-
+ 
   .picker-list{ max-height:280px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-top:10px; }
   .picker-item{ display:flex; justify-content:space-between; align-items:center; padding:9px 12px; background:var(--panel-2); border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; font-size:13px; }
   .picker-item:hover{ border-color:var(--accent-dim); }
   .picker-item .meta{ font-family:var(--font-mono); font-size:11px; color:var(--text-dim); }
-
+ 
   footer.app-footer{ text-align:center; padding:22px; color:var(--text-faint); font-size:11.5px; font-family:var(--font-mono); border-top:1px solid var(--border-soft); letter-spacing:.3px; }
-
+ 
   @media (max-width:720px){
     .form-grid{ grid-template-columns:1fr; }
     header.topbar{ padding:12px 14px; }
@@ -329,16 +336,26 @@
 </head>
 <body>
 <div class="app">
-
+ 
   <header class="topbar">
     <div class="brand">
+      <!--
+        LOGO INSTITUCIONAL INVÍAS
+        Coloca el archivo del logo en:  assets/logo-invias.png
+        (junto a este index.html, en una carpeta llamada "assets")
+        La ruta es relativa, por lo que funciona igual en local, GitHub Pages y Netlify.
+        Si el archivo aún no existe, el logo simplemente no se muestra y el resto
+        del encabezado permanece intacto.
+      -->
+      <img src="assets/logo-invias.png" alt="INVÍAS" class="brand-logo"
+           onerror="this.style.display='none'" />
       <div class="brand-mark">IV</div>
       <div class="brand-text">
         <h1>InspecVía</h1>
         <p>Inspección de pavimentos · Atlántico</p>
       </div>
     </div>
-
+ 
     <nav class="tabs" role="tablist">
       <button type="button" class="tab-btn active" data-tab="fichas" role="tab" aria-selected="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="20"/></svg>
@@ -349,13 +366,13 @@
         Mapa Interactivo
       </button>
     </nav>
-
+ 
     <div class="conn" id="connIndicator">
       <span class="conn-dot"></span>
       <span id="connLabel">Sin conexión</span>
     </div>
   </header>
-
+ 
   <main>
     <div class="config-banner" id="configBanner">
       <span>⚠</span>
@@ -365,7 +382,7 @@
         funciona en modo local y los datos no se guardarán al recargar la página.
       </div>
     </div>
-
+ 
     <!-- ===================== TAB 1: FICHAS TÉCNICAS ===================== -->
     <section class="view active" id="view-fichas">
       <div class="via-consulta-wrap">
@@ -376,7 +393,7 @@
         </select>
         <span class="via-consulta-hint">Elige una vía para ver sus fichas, o "Todas las vías" para consultar toda la base de datos.</span>
       </div>
-
+ 
       <div class="toolbar">
         <div class="search-wrap">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -391,12 +408,12 @@
           Añadir Ficha
         </button>
       </div>
-
+ 
       <div class="export-status" id="exportStatus">
         <span class="export-spinner"></span>
         <span id="exportStatusLabel">Preparando exportación…</span>
       </div>
-
+ 
       <div class="filter-row">
         <select id="filterCalzada">
           <option value="">Toda calzada</option>
@@ -414,7 +431,7 @@
         </select>
         <button class="btn btn-ghost btn-sm" id="btnClearFilters">Limpiar filtros</button>
       </div>
-
+ 
       <div class="cards-grid" id="cardsGrid"></div>
       <div class="empty-state" id="emptyState" style="display:none;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
@@ -422,7 +439,7 @@
         <p id="emptyStateText">Ajusta los filtros o añade una nueva ficha técnica.</p>
       </div>
     </section>
-
+ 
     <!-- ===================== TAB 2: MAPA INTERACTIVO ===================== -->
     <section class="view" id="view-mapa">
       <div class="map-toolbar">
@@ -439,12 +456,12 @@
       <div id="mapContainer"></div>
     </section>
   </main>
-
+ 
   <footer class="app-footer">
     InspecVía — Sistema de inspección técnica de pavimentos · Autores: Mateo Ortiz y Juan David Mendoza
   </footer>
 </div>
-
+ 
 <!-- ===================== MODAL: FICHA FORM ===================== -->
 <div class="modal-overlay" id="fichaModalOverlay">
   <div class="modal">
@@ -455,12 +472,12 @@
     <div class="modal-body">
       <form id="fichaForm">
         <div class="form-grid">
-
+ 
           <div class="form-group full" id="fichaMultiProgress" style="display:none; background:var(--bg-soft); border:1px solid var(--accent-dim); border-radius:var(--radius-sm); padding:10px 14px;">
             <strong style="color:var(--accent); font-size:12.5px; text-transform:uppercase; letter-spacing:.4px;">Registro múltiple</strong>
             <div class="hint" id="fichaMultiProgressText" style="margin-top:2px;"></div>
           </div>
-
+ 
           <div class="form-section-title">Ubicación</div>
           <div class="form-group">
             <label for="f_via">Vía</label>
@@ -470,8 +487,8 @@
             <label for="f_pr">PR <span class="hint">ej: PR 9+500</span></label>
             <input type="text" id="f_pr" placeholder="PR 9+500" required />
           </div>
-          <div class="form-group full" id="f_coordsSharedHint" style="display:none; background:var(--bg-soft); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; font-size:12px; color:var(--text-dim);">
-            📍 <strong style="color:var(--text);">Ubicación del grupo (compartida):</strong> estas coordenadas se heredan automáticamente del primer daño de este PR y no pueden modificarse aquí.
+          <div class="form-group full" id="f_grupoComunHint" style="display:none; background:var(--bg-soft); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; font-size:12px; color:var(--text-dim);">
+            📍 <strong style="color:var(--text);">Información común del grupo:</strong> el PR y las coordenadas se definieron al inicio y se guardan igual en todos los daños de este grupo, por lo que no se editan aquí.
           </div>
           <div class="form-group">
             <label for="f_lat">Latitud</label>
@@ -497,15 +514,9 @@
           </div>
           <div class="form-group">
             <label for="f_carril">Carril</label>
-            <select id="f_carril" required>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="Berma izquierda">Berma izquierda</option>
-              <option value="Berma derecha">Berma derecha</option>
-            </select>
+            <select id="f_carril" required></select>
           </div>
-
+ 
           <div class="form-section-title">Clasificación del daño</div>
           <div class="form-group">
             <label for="f_tipoDano">Tipo de daño</label>
@@ -523,7 +534,7 @@
               <option value="Alta">Alta (A)</option>
             </select>
           </div>
-
+ 
           <div class="form-section-title">Dimensiones del daño</div>
           <div class="form-group">
             <label for="f_danoLargo">Largo del daño (m)</label>
@@ -533,7 +544,7 @@
             <label for="f_danoAncho">Ancho del daño (m)</label>
             <input type="number" step="0.01" min="0" id="f_danoAncho" />
           </div>
-
+ 
           <div class="form-section-title">Reparación</div>
           <div class="form-group full">
             <label>¿Hay reparación?</label>
@@ -550,13 +561,13 @@
             <label for="f_repAncho">Ancho de reparación (m)</label>
             <input type="number" step="0.01" min="0" id="f_repAncho" />
           </div>
-
+ 
           <div class="form-section-title">Observaciones</div>
           <div class="form-group full">
             <label for="f_comentarios">Comentarios y aclaraciones</label>
             <textarea id="f_comentarios" rows="3" placeholder="Observaciones del levantamiento, aclaraciones, condiciones particulares u otra información relevante…"></textarea>
           </div>
-
+ 
           <div class="form-section-title">Fotografías <span class="hint" style="text-transform:none;">(1 a 4 · la primera cargada será la principal)</span></div>
           <div class="form-group full">
             <div class="photo-drop" id="photoDrop">
@@ -565,7 +576,7 @@
             </div>
             <div class="photo-previews" id="photoPreviews"></div>
           </div>
-
+ 
         </div>
       </form>
     </div>
@@ -575,7 +586,7 @@
     </div>
   </div>
 </div>
-
+ 
 <!-- ===================== MODAL: CANTIDAD DE DAÑOS ===================== -->
 <div class="modal-overlay" id="countModalOverlay">
   <div class="modal" style="max-width:400px;">
@@ -589,9 +600,23 @@
         <input type="number" id="countDanos" min="1" step="1" value="1" />
         <span class="hint">Si registras 2 o más daños en el mismo punto, se pedirá un PR común y luego se completará cada daño por separado (cada uno quedará como una ficha independiente).</span>
       </div>
-      <div class="form-group full" id="countPrGroup" style="display:none;">
-        <label for="countPr">PR común para estos daños <span class="hint">ej: PR 9+500</span></label>
-        <input type="text" id="countPr" placeholder="PR 9+500" />
+      <div id="countPrGroup" style="display:none;">
+        <div class="form-section-title" style="border-top:1px solid var(--border-soft); padding-top:12px; margin:0 0 10px;">Información común del grupo</div>
+        <div class="form-group full" style="margin-bottom:12px;">
+          <label for="countPr">PR común <span class="hint">ej: PR 9+500</span></label>
+          <input type="text" id="countPr" placeholder="PR 9+500" />
+        </div>
+        <div class="form-grid" style="gap:12px;">
+          <div class="form-group">
+            <label for="countLat">Latitud común</label>
+            <input type="number" step="any" id="countLat" placeholder="10.987654" />
+          </div>
+          <div class="form-group">
+            <label for="countLng">Longitud común</label>
+            <input type="number" step="any" id="countLng" placeholder="-74.812345" />
+          </div>
+        </div>
+        <span class="hint" style="display:block; margin-top:8px;">Estos tres datos se escriben una sola vez y quedan guardados físicamente en cada daño del grupo.</span>
       </div>
     </div>
     <div class="modal-footer">
@@ -600,7 +625,7 @@
     </div>
   </div>
 </div>
-
+ 
 <!-- ===================== MODAL: FICHA (SOLO VISUALIZACIÓN) ===================== -->
 <div class="modal-overlay" id="fichaViewModalOverlay">
   <div class="modal">
@@ -615,7 +640,7 @@
     </div>
   </div>
 </div>
-
+ 
 <!-- ===================== MODAL: PIN PICKER ===================== -->
 <div class="modal-overlay" id="pinModalOverlay">
   <div class="modal" style="max-width:420px;">
@@ -629,7 +654,7 @@
     </div>
   </div>
 </div>
-
+ 
 <script>
 /* =========================================================================
    CONFIGURACIÓN DE FIREBASE
@@ -644,10 +669,10 @@ const firebaseConfig = {
   messagingSenderId: "205746026492", // TODO: tu sender id
   appId: "1:205746026492:web:edbb2d2a9e108c5b07a479"              // TODO: tu app id
 };
-
+ 
 /* ========================= CONSTANTES DEL DOMINIO ========================= */
 const VIAS = ["9006","2516","25ATA","90AT01","90A01","9007","2702"];
-
+ 
 const TIPOS_DANO = {
   "Fisuras": [
     "Fisura Longitudinal (FL)","Fisura Transversal (FT)",
@@ -661,9 +686,9 @@ const TIPOS_DANO = {
   "Daños Superficiales": ["Desgaste Superficial (DSU)","Pérdida de Agregado (PA)","Pulimiento del Agregado (PU)","Cabezas Duras (CD)","Exudación (EX)","Surcos (SU)"],
   "Otros Daños": ["Corrimiento Vertical de la Berma (CVB)","Separación de la Berma (SB)","Afloramiento de Finos (AFI)","Afloramiento de Agua (AFA)"]
 };
-
+ 
 const ATLANTICO_CENTER = [10.6966, -74.8741];
-
+ 
 /* ========================= ESTADO GLOBAL ========================= */
 const state = {
   fichas: [],
@@ -673,14 +698,14 @@ const state = {
   addPinMode: false,
   pendingPinLatLng: null,
   hayReparacion: false,
-  multiRegistro: null // { total, current, pr, lat, lng } cuando se registran varios daños del mismo PR (lat/lng se capturan del primer daño y se comparten con el resto)
+  multiRegistro: null // { total, current, pr } cuando se registran varios daños del mismo PR
 };
-
+ 
 let db = null;
 let firebaseReady = false;
 let map = null;
 let markersLayer = null;
-
+ 
 /* ========================= INIT FIREBASE ========================= */
 function initFirebase(){
   try{
@@ -695,7 +720,7 @@ function initFirebase(){
     console.error('Error inicializando Firebase:', err);
     document.getElementById('configBanner').classList.add('show');
   }
-
+ 
   if (firebaseReady) {
     db.collection('fichas').onSnapshot({ includeMetadataChanges:true }, snapshot => {
       setConnectionStatus(!snapshot.metadata.fromCache && navigator.onLine);
@@ -709,18 +734,18 @@ function initFirebase(){
     setConnectionStatus(false);
     renderAll();
   }
-
+ 
   window.addEventListener('online', () => setConnectionStatus(firebaseReady));
   window.addEventListener('offline', () => setConnectionStatus(false));
 }
-
+ 
 function setConnectionStatus(connected){
   const el = document.getElementById('connIndicator');
   const label = document.getElementById('connLabel');
   el.classList.toggle('is-online', !!connected);
   label.textContent = connected ? 'Conectado' : (firebaseReady ? 'Sin conexión' : 'Modo local (sin Firebase)');
 }
-
+ 
 /* ========================= CRUD ========================= */
 function addFicha(data){
   if (firebaseReady){
@@ -732,7 +757,7 @@ function addFicha(data){
     renderAll();
   }
 }
-
+ 
 function updateFicha(id, data){
   if (firebaseReady){
     db.collection('fichas').doc(id).update(data).catch(err => alert('Error al actualizar: ' + err.message));
@@ -742,7 +767,7 @@ function updateFicha(id, data){
     renderAll();
   }
 }
-
+ 
 function deleteFicha(id){
   if (firebaseReady){
     db.collection('fichas').doc(id).delete().catch(err => alert('Error al eliminar: ' + err.message));
@@ -751,12 +776,12 @@ function deleteFicha(id){
     renderAll();
   }
 }
-
+ 
 /* ========================= UTILIDADES ========================= */
 function escapeHtml(str){
   return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-
+ 
 function parsePR(prStr){
   if (!prStr) return 0;
   const m = String(prStr).match(/(\d+)\s*\+\s*(\d+)/);
@@ -764,21 +789,70 @@ function parsePR(prStr){
   const n = parseFloat(String(prStr).replace(/[^\d.]/g,''));
   return isNaN(n) ? 0 : n;
 }
-
+ 
 function severityColor(sev){
   return sev === 'Alta' ? getCss('--sev-alta') : sev === 'Media' ? getCss('--sev-media') : getCss('--sev-baja');
 }
 function getCss(varName){
   return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
 }
-
+ 
 function tipoAbrev(tipoDano){
   const map = { "Fisuras":"Fisuras","Deformaciones":"Deform.","Pérdidas en la Capa de la Estructura":"Pérdida Capa","Daños Superficiales":"Superficial","Otros Daños":"Otros" };
   return map[tipoDano] || tipoDano || '';
 }
-
+ 
 function isFisuraTipo(tipoDano){ return tipoDano === 'Fisuras'; }
-
+ 
+/* ---------- Carril: nomenclatura según número de calzadas ---------- */
+const CARRIL_OPCIONES_1_CALZADA  = ['Izquierdo','Derecho','Berma izquierda','Berma derecha'];
+const CARRIL_OPCIONES_2_CALZADAS = ['1','2','3','Berma izquierda','Berma derecha'];
+ 
+function carrilOpcionesPorCalzadas(numCalzadas){
+  return String(numCalzadas || '1') === '2' ? CARRIL_OPCIONES_2_CALZADAS : CARRIL_OPCIONES_1_CALZADA;
+}
+ 
+/**
+ * Traduce el valor almacenado de Carril a la nomenclatura vigente SIN tocar
+ * Firestore (normalización solo en código, no destructiva).
+ * En vías de UNA calzada: "1" → "Derecho" y "2" → "Izquierdo".
+ * En vías de DOS calzadas se conserva el valor tal cual (su lógica no cambia).
+ * Los valores sin equivalencia segura ("3", "4", "Berma" genérica) se devuelven
+ * sin alterar: nunca se inventa si una berma antigua era izquierda o derecha.
+ */
+function normalizarCarril(carrilRaw, numCalzadas){
+  const raw = carrilRaw != null ? String(carrilRaw).trim() : '';
+  if (!raw) return '';
+  const esUnaCalzada = String(numCalzadas || '1') !== '2';
+  if (esUnaCalzada){
+    if (raw === '1') return 'Derecho';
+    if (raw === '2') return 'Izquierdo';
+  }
+  return raw;
+}
+ 
+/**
+ * Texto que se muestra al usuario para el carril de una ficha.
+ * Las bermas se muestran solas ("Berma izquierda"), nunca como
+ * "Carril Berma izquierda"; el resto lleva el prefijo "Carril".
+ */
+function carrilLabel(f){
+  const valor = normalizarCarril(f?.carril, f?.numCalzadas);
+  if (!valor) return '—';
+  if (/^berma/i.test(valor)) return valor;
+  if (valor === 'Derecho') return 'Carril derecho';
+  if (valor === 'Izquierdo') return 'Carril izquierdo';
+  return `Carril ${valor}`;
+}
+ 
+/** Reconstruye las opciones del select de Carril según las calzadas elegidas. */
+function updateCarrilFormOptions(){
+  const sel = document.getElementById('f_carril');
+  const opciones = carrilOpcionesPorCalzadas(document.getElementById('f_numCalzadas').value);
+  sel.innerHTML = '';
+  opciones.forEach(v => sel.appendChild(new Option(v, v)));
+}
+ 
 /* ========================= COMPRESIÓN DE FOTOS ========================= */
 function compressImage(file){
   return new Promise((resolve, reject) => {
@@ -804,7 +878,7 @@ function compressImage(file){
     reader.readAsDataURL(file);
   });
 }
-
+ 
 /* ========================= TABS ========================= */
 function switchTab(tabName){
   document.querySelectorAll('.tab-btn').forEach(b => {
@@ -819,7 +893,7 @@ function switchTab(tabName){
   }
 }
 document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
-
+ 
 /* ========================= FILTROS (poblar selects) ========================= */
 function populateStaticSelects(){
   VIAS.forEach(via => {
@@ -828,20 +902,32 @@ function populateStaticSelects(){
     const optViaConsulta = document.createElement('option'); optViaConsulta.value = via; optViaConsulta.textContent = via;
     document.getElementById('viaConsulta').appendChild(optViaConsulta);
   });
-
+ 
   const tipoForm = document.getElementById('f_tipoDano');
   const tipoFilter = document.getElementById('filterTipo');
   Object.keys(TIPOS_DANO).forEach(tipo => {
     tipoForm.appendChild(new Option(tipo, tipo));
     tipoFilter.appendChild(new Option(tipo, tipo));
   });
-
-  document.getElementById('filterCarril').append(new Option('1','1'), new Option('2','2'), new Option('3','3'), new Option('Berma izquierda','Berma izquierda'), new Option('Berma derecha','Berma derecha'));
-
+ 
+  // Filtro de carril: nomenclatura de una calzada (Izquierdo/Derecho) + la de
+  // dos calzadas (carriles numerados) + bermas, comunes a ambas. El filtrado
+  // compara contra el valor normalizado, así que las fichas antiguas de una
+  // calzada con Carril 1/2 aparecen correctamente bajo Derecho/Izquierdo.
+  document.getElementById('filterCarril').append(
+    new Option('Derecho (1 calzada)','Derecho'),
+    new Option('Izquierdo (1 calzada)','Izquierdo'),
+    new Option('Carril 1 (2 calzadas)','1'),
+    new Option('Carril 2 (2 calzadas)','2'),
+    new Option('Carril 3 (2 calzadas)','3'),
+    new Option('Berma izquierda','Berma izquierda'),
+    new Option('Berma derecha','Berma derecha')
+  );
+ 
   updateFormTipologiaOptions();
   updateFilterTipologiaOptions();
 }
-
+ 
 function updateFormTipologiaOptions(){
   const tipo = document.getElementById('f_tipoDano').value;
   const sel = document.getElementById('f_tipologia');
@@ -849,7 +935,7 @@ function updateFormTipologiaOptions(){
   (TIPOS_DANO[tipo] || []).forEach(t => sel.appendChild(new Option(t, t)));
   toggleAnchoFields(tipo);
 }
-
+ 
 function updateFilterTipologiaOptions(){
   const tipo = document.getElementById('filterTipo').value;
   const sel = document.getElementById('filterTipologia');
@@ -859,13 +945,13 @@ function updateFilterTipologiaOptions(){
   list.forEach(t => sel.appendChild(new Option(t, t)));
   if (list.includes(current)) sel.value = current;
 }
-
+ 
 function toggleAnchoFields(tipo){
   const fisura = isFisuraTipo(tipo);
   document.getElementById('f_danoAnchoGroup').style.display = fisura ? 'none' : 'flex';
   updateReparacionFieldsVisibility();
 }
-
+ 
 /**
  * Controla la visibilidad de los campos Largo/Ancho de reparación según
  * dos condiciones combinadas: si el usuario indicó que SÍ hay reparación
@@ -879,7 +965,7 @@ function updateReparacionFieldsVisibility(){
   document.getElementById('f_repLargoGroup').style.display = showRep ? 'flex' : 'none';
   document.getElementById('f_repAnchoGroup').style.display = (showRep && !fisura) ? 'flex' : 'none';
 }
-
+ 
 function setHayReparacionUI(value){
   state.hayReparacion = value;
   document.querySelectorAll('#f_hayReparacionToggle .toggle-btn').forEach(btn => {
@@ -892,11 +978,11 @@ function setHayReparacionUI(value){
     document.getElementById('f_repAncho').value = '';
   }
 }
-
+ 
 document.querySelectorAll('#f_hayReparacionToggle .toggle-btn').forEach(btn => {
   btn.addEventListener('click', () => setHayReparacionUI(btn.dataset.value === 'si'));
 });
-
+ 
 /**
  * Determina si una ficha (nueva o antigua) tiene reparación registrada.
  * - Si el documento ya tiene el campo booleano hayReparacion, se usa tal cual.
@@ -910,13 +996,14 @@ function inferHayReparacion(f){
   const anchoVacio = f?.repAncho === 0 || f?.repAncho == null || f?.repAncho === '';
   return !(largoVacio && anchoVacio);
 }
-
+ 
 document.getElementById('f_tipoDano').addEventListener('change', updateFormTipologiaOptions);
 document.getElementById('filterTipo').addEventListener('change', () => { updateFilterTipologiaOptions(); renderCards(); renderMapMarkers(); });
 document.getElementById('f_numCalzadas').addEventListener('change', e => {
   document.getElementById('f_calzadaGroup').style.display = e.target.value === '2' ? 'flex' : 'none';
+  updateCarrilFormOptions(); // una calzada: Izquierdo/Derecho/Bermas · dos calzadas: carriles numerados
 });
-
+ 
 ['searchInput'].forEach(id => document.getElementById(id).addEventListener('input', () => { renderCards(); renderMapMarkers(); }));
 ['viaConsulta'].forEach(id => document.getElementById(id).addEventListener('change', renderCards));
 ['filterCalzada','filterCarril','filterTipologia','filterSeveridad'].forEach(id =>
@@ -931,13 +1018,13 @@ document.getElementById('btnClearFilters').addEventListener('click', () => {
   renderCards();
   renderMapMarkers();
 });
-
+ 
 /* ========================= RENDER: CARDS ========================= */
 function renderAll(){
   renderCards();
   renderMapMarkers();
 }
-
+ 
 /**
  * Devuelve la lista de fichas que corresponden a la consulta actual
  * (selector "Vía a consultar" + filtros acumulativos + buscador), ordenada
@@ -949,32 +1036,32 @@ function renderAll(){
 function getFichasConsultadas(){
   const viaConsulta = document.getElementById('viaConsulta').value;
   if (!viaConsulta) return null; // aún no se ha elegido una vía
-
+ 
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
   const calzadaF = document.getElementById('filterCalzada').value;
   const carrilF = document.getElementById('filterCarril').value;
   const tipoF = document.getElementById('filterTipo').value;
   const tipologiaF = document.getElementById('filterTipologia').value;
   const sevF = document.getElementById('filterSeveridad').value;
-
+ 
   let list = state.fichas.filter(f => {
     if (viaConsulta !== '__ALL__' && f.via !== viaConsulta) return false;
     if (calzadaF && f.calzada !== calzadaF) return false;
-    if (carrilF && String(f.carril) !== carrilF) return false;
+    if (carrilF && normalizarCarril(f.carril, f.numCalzadas) !== carrilF) return false;
     if (tipoF && f.tipoDano !== tipoF) return false;
     if (tipologiaF && f.tipologia !== tipologiaF) return false;
     if (sevF && f.severidad !== sevF) return false;
     if (q){
-      const hay = `${f.via||''} ${f.pr||''} ${f.tipoDano||''} ${f.tipologia||''} carril ${f.carril||''} ${f.comentarios||''}`.toLowerCase();
+      const hay = `${f.via||''} ${f.pr||''} ${f.tipoDano||''} ${f.tipologia||''} carril ${f.carril||''} ${carrilLabel(f)} ${f.comentarios||''}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
   });
-
+ 
   list.sort((a,b) => (a.via||'').localeCompare(b.via||'') || parsePR(a.pr) - parsePR(b.pr));
   return list;
 }
-
+ 
 /**
  * Igual que getFichasConsultadas() pero SIN exigir que se haya seleccionado
  * una vía en "Vía a consultar": el mapa interactivo es una herramienta de
@@ -990,37 +1077,37 @@ function getFichasParaMapa(){
   const tipoF = document.getElementById('filterTipo').value;
   const tipologiaF = document.getElementById('filterTipologia').value;
   const sevF = document.getElementById('filterSeveridad').value;
-
+ 
   return state.fichas.filter(f => {
     if (calzadaF && f.calzada !== calzadaF) return false;
-    if (carrilF && String(f.carril) !== carrilF) return false;
+    if (carrilF && normalizarCarril(f.carril, f.numCalzadas) !== carrilF) return false;
     if (tipoF && f.tipoDano !== tipoF) return false;
     if (tipologiaF && f.tipologia !== tipologiaF) return false;
     if (sevF && f.severidad !== sevF) return false;
     if (q){
-      const hay = `${f.via||''} ${f.pr||''} ${f.tipoDano||''} ${f.tipologia||''} carril ${f.carril||''} ${f.comentarios||''}`.toLowerCase();
+      const hay = `${f.via||''} ${f.pr||''} ${f.tipoDano||''} ${f.tipologia||''} carril ${f.carril||''} ${carrilLabel(f)} ${f.comentarios||''}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
   });
 }
-
+ 
 function renderCards(){
   const grid = document.getElementById('cardsGrid');
   const empty = document.getElementById('emptyState');
   const emptyTitle = document.getElementById('emptyStateTitle');
   const emptyText = document.getElementById('emptyStateText');
   grid.innerHTML = '';
-
+ 
   const list = getFichasConsultadas();
-
+ 
   if (list === null){
     empty.style.display = 'block';
     emptyTitle.textContent = 'Selecciona una vía para visualizar las fichas técnicas.';
     emptyText.textContent = 'Usa el selector "Vía a consultar" arriba, o elige "Todas las vías" para ver toda la base de datos.';
     return;
   }
-
+ 
   if (!list.length){
     empty.style.display = 'block';
     emptyTitle.textContent = 'No hay fichas para mostrar';
@@ -1030,7 +1117,7 @@ function renderCards(){
   empty.style.display = 'none';
   list.forEach(f => grid.appendChild(buildCardNode(f)));
 }
-
+ 
 function buildCardNode(f){
   const div = document.createElement('div');
   div.className = 'card';
@@ -1038,7 +1125,7 @@ function buildCardNode(f){
   const principal = fotos[0] || '';
   const extras = fotos.slice(1);
   const expanded = state.expandedCards.has(f.id);
-
+ 
   div.innerHTML = `
     <div class="card-photo" style="${principal ? `background-image:url('${principal}')` : ''}">
       ${!principal ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>` : ''}
@@ -1049,7 +1136,7 @@ function buildCardNode(f){
       <div class="card-title-row">
         <div>
           <div class="card-title">${escapeHtml(f.tipologia)}</div>
-          <div class="card-sub">${escapeHtml(tipoAbrev(f.tipoDano))} · Carril ${escapeHtml(f.carril)}${f.calzada ? ' · Calzada ' + escapeHtml(f.calzada) : ''}</div>
+          <div class="card-sub">${escapeHtml(tipoAbrev(f.tipoDano))} · ${escapeHtml(carrilLabel(f))}${f.calzada ? ' · Calzada ' + escapeHtml(f.calzada) : ''}</div>
         </div>
         <div class="pr-post"><span class="cap">PR</span><span class="val">${escapeHtml((f.pr||'').replace(/^PR\s*/i,''))}</span></div>
       </div>
@@ -1079,7 +1166,7 @@ function buildCardNode(f){
   `;
   return div;
 }
-
+ 
 document.getElementById('cardsGrid').addEventListener('click', e => {
   const btn = e.target.closest('[data-action]');
   if (!btn) return;
@@ -1091,15 +1178,15 @@ document.getElementById('cardsGrid').addEventListener('click', e => {
     renderCards();
   }
 });
-
+ 
 /* ========================= MODAL FICHA ========================= */
 const fichaModalOverlay = document.getElementById('fichaModalOverlay');
-
+ 
 function openFichaModal(id){
   state.editingId = id || null;
   const f = id ? state.fichas.find(x => x.id === id) : null;
   const multi = !f ? state.multiRegistro : null; // el modo múltiple solo aplica al crear, nunca al editar
-
+ 
   const progressEl = document.getElementById('fichaMultiProgress');
   if (multi){
     progressEl.style.display = 'block';
@@ -1109,53 +1196,62 @@ function openFichaModal(id){
     progressEl.style.display = 'none';
     document.getElementById('fichaModalTitle').textContent = f ? 'Editar Ficha Técnica' : 'Añadir Ficha Técnica';
   }
-
+ 
   const saveBtn = document.getElementById('btnSaveFicha');
   saveBtn.textContent = multi ? (multi.current < multi.total ? 'Guardar y continuar' : 'Guardar y finalizar') : 'Guardar Ficha';
-
+ 
   document.getElementById('f_via').value = f?.via || VIAS[0];
+ 
+  // PR y coordenadas: en un registro múltiple provienen de la "Información
+  // común del grupo" y se muestran en solo lectura (la fuente de verdad al
+  // guardar es state.multiRegistro, no estos inputs).
   const prField = document.getElementById('f_pr');
-  prField.value = f?.pr || (multi ? multi.pr : '');
-  prField.readOnly = !!multi; // el PR es compartido y no debe modificarse durante el registro múltiple
-
-  // Coordenadas: en un registro múltiple, el primer daño las introduce
-  // normalmente; a partir del segundo daño se heredan automáticamente del
-  // primero y quedan en solo lectura para evitar que distintos daños del
-  // mismo PR terminen en puntos diferentes del mapa.
   const latField = document.getElementById('f_lat');
   const lngField = document.getElementById('f_lng');
-  const coordsCompartidas = !!(multi && multi.current > 1);
-  document.getElementById('f_coordsSharedHint').style.display = coordsCompartidas ? 'block' : 'none';
-  latField.readOnly = coordsCompartidas;
-  lngField.readOnly = coordsCompartidas;
-  latField.value = coordsCompartidas ? (multi.lat ?? '') : (f?.lat ?? '');
-  lngField.value = coordsCompartidas ? (multi.lng ?? '') : (f?.lng ?? '');
+  prField.value = f?.pr || (multi ? multi.pr : '');
+  prField.readOnly = !!multi;
+  latField.value = multi ? multi.lat : (f?.lat ?? '');
+  lngField.value = multi ? multi.lng : (f?.lng ?? '');
+  latField.readOnly = !!multi;
+  lngField.readOnly = !!multi;
+  document.getElementById('f_grupoComunHint').style.display = multi ? 'block' : 'none';
+ 
   document.getElementById('f_numCalzadas').value = f?.numCalzadas || '1';
   document.getElementById('f_calzadaGroup').style.display = (f?.numCalzadas === '2' || f?.numCalzadas === 2) ? 'flex' : 'none';
   document.getElementById('f_calzada').value = f?.calzada || 'Derecha';
-
-  // Carril: "4" y "Berma" (genérica) ya no son opciones normales (se
-  // reemplazaron por "Berma izquierda" / "Berma derecha"), pero si se está
-  // editando una ficha histórica con alguno de esos valores, se preserva
-  // añadiendo temporalmente esa opción, sin ofrecerla nunca para fichas nuevas.
-  const CARRIL_OPCIONES_ACTUALES = ['1','2','3','Berma izquierda','Berma derecha'];
+ 
+  // Carril: las opciones dependen del número de calzadas (una calzada usa
+  // Izquierdo/Derecho/Bermas; dos calzadas conserva la lógica actual de
+  // carriles numerados). Los valores históricos con equivalencia definida
+  // (1→Derecho, 2→Izquierdo en vías de una calzada) se traducen solos; los
+  // que no tienen equivalencia segura ("3", "4", "Berma" genérica) se
+  // preservan tal cual mediante una opción histórica temporal.
+  const numCalzadasFicha = String(f?.numCalzadas || '1');
+  updateCarrilFormOptions();
   const carrilSel = document.getElementById('f_carril');
-  carrilSel.querySelectorAll('option[data-legacy="true"]').forEach(o => o.remove());
-  const carrilValor = f?.carril != null ? String(f.carril) : '1';
-  if (f && !CARRIL_OPCIONES_ACTUALES.includes(carrilValor)){
-    const opt = new Option(`${carrilValor} (histórico)`, carrilValor);
-    opt.dataset.legacy = 'true';
-    carrilSel.insertBefore(opt, carrilSel.firstChild);
+  const carrilRaw = f?.carril != null ? String(f.carril) : null;
+  const opcionesCarril = carrilOpcionesPorCalzadas(numCalzadasFicha);
+  if (f && carrilRaw !== null){
+    const carrilEfectivo = normalizarCarril(carrilRaw, numCalzadasFicha);
+    if (opcionesCarril.includes(carrilEfectivo)){
+      carrilSel.value = carrilEfectivo;
+    } else {
+      const opt = new Option(`${carrilRaw} (histórico)`, carrilRaw);
+      opt.dataset.legacy = 'true';
+      carrilSel.insertBefore(opt, carrilSel.firstChild);
+      carrilSel.value = carrilRaw;
+    }
+  } else {
+    carrilSel.value = opcionesCarril[0];
   }
-  carrilSel.value = carrilValor;
-
+ 
   document.getElementById('f_tipoDano').value = f?.tipoDano || Object.keys(TIPOS_DANO)[0];
   updateFormTipologiaOptions();
   document.getElementById('f_tipologia').value = f?.tipologia || '';
   document.getElementById('f_severidad').value = f?.severidad || 'Baja';
   document.getElementById('f_danoLargo').value = f?.danoLargo ?? '';
   document.getElementById('f_danoAncho').value = f?.danoAncho ?? '';
-
+ 
   // Reparación: se infiere si existe reparación (fichas antiguas con 0×0 o
   // sin datos se interpretan como "No") y se ajusta la visibilidad de los
   // campos de dimensiones en consecuencia.
@@ -1163,22 +1259,22 @@ function openFichaModal(id){
   setHayReparacionUI(hayRep);
   document.getElementById('f_repLargo').value = hayRep ? (f?.repLargo ?? '') : '';
   document.getElementById('f_repAncho').value = hayRep ? (f?.repAncho ?? '') : '';
-
+ 
   document.getElementById('f_comentarios').value = f?.comentarios ?? ''; // compatible con fichas antiguas sin este campo
-
+ 
   state.currentFotos = f?.fotos ? [...f.fotos] : [];
   renderPhotoPreviews();
-
+ 
   fichaModalOverlay.classList.add('show');
 }
-
+ 
 function closeFichaModal(){
   fichaModalOverlay.classList.remove('show');
   state.editingId = null;
   state.currentFotos = [];
   document.getElementById('f_fotos').value = '';
 }
-
+ 
 /**
  * Cierra el modal de ficha, pero si hay un registro múltiple en curso pide
  * confirmación primero: los daños ya guardados de esa serie permanecen en
@@ -1196,21 +1292,26 @@ function requestCloseFichaModal(){
   }
   closeFichaModal();
 }
-
+ 
 document.getElementById('btnAddFicha').addEventListener('click', () => {
+  // Cada nuevo grupo empieza con su propia información común: se limpian
+  // siempre el PR y las coordenadas del grupo anterior.
+  state.multiRegistro = null;
   document.getElementById('countDanos').value = '1';
   document.getElementById('countPr').value = '';
+  document.getElementById('countLat').value = '';
+  document.getElementById('countLng').value = '';
   document.getElementById('countPrGroup').style.display = 'none';
   document.getElementById('countModalOverlay').classList.add('show');
 });
 document.getElementById('btnCloseFichaModal').addEventListener('click', requestCloseFichaModal);
 document.getElementById('btnCancelFicha').addEventListener('click', requestCloseFichaModal);
 fichaModalOverlay.addEventListener('click', e => { if (e.target === fichaModalOverlay) requestCloseFichaModal(); });
-
+ 
 /* ---- modal: ¿cuántos daños se van a registrar? ---- */
 const countModalOverlay = document.getElementById('countModalOverlay');
 function closeCountModal(){ countModalOverlay.classList.remove('show'); }
-
+ 
 document.getElementById('countDanos').addEventListener('input', e => {
   const n = parseInt(e.target.value, 10);
   document.getElementById('countPrGroup').style.display = (n >= 2) ? 'block' : 'none';
@@ -1218,7 +1319,7 @@ document.getElementById('countDanos').addEventListener('input', e => {
 document.getElementById('btnCloseCountModal').addEventListener('click', closeCountModal);
 document.getElementById('btnCancelCount').addEventListener('click', closeCountModal);
 countModalOverlay.addEventListener('click', e => { if (e.target === countModalOverlay) closeCountModal(); });
-
+ 
 document.getElementById('btnContinueCount').addEventListener('click', () => {
   const n = parseInt(document.getElementById('countDanos').value, 10);
   if (!n || n < 1){
@@ -1231,16 +1332,28 @@ document.getElementById('btnContinueCount').addEventListener('click', () => {
     openFichaModal(null);
   } else {
     const pr = document.getElementById('countPr').value.trim();
+    const latRaw = document.getElementById('countLat').value;
+    const lngRaw = document.getElementById('countLng').value;
+    const lat = latRaw !== '' ? parseFloat(latRaw) : NaN;
+    const lng = lngRaw !== '' ? parseFloat(lngRaw) : NaN;
+ 
     if (!pr){
       alert('Ingresa el PR común para estos daños.');
       return;
     }
-    state.multiRegistro = { total: n, current: 1, pr, lat: null, lng: null };
+    if (isNaN(lat) || isNaN(lng)){
+      alert('Ingresa una latitud y una longitud válidas para el grupo. Se guardarán en cada uno de los daños.');
+      return;
+    }
+ 
+    // Fuente de verdad del grupo: estos valores (no los inputs del formulario)
+    // son los que se escriben en cada documento de Firestore.
+    state.multiRegistro = { total: n, current: 1, pr, lat, lng };
     closeCountModal();
     openFichaModal(null);
   }
 });
-
+ 
 /* ---- fotos ---- */
 const photoDrop = document.getElementById('photoDrop');
 photoDrop.addEventListener('click', () => document.getElementById('f_fotos').click());
@@ -1256,7 +1369,7 @@ document.getElementById('f_fotos').addEventListener('change', async e => {
   renderPhotoPreviews();
   e.target.value = '';
 });
-
+ 
 function renderPhotoPreviews(){
   const wrap = document.getElementById('photoPreviews');
   wrap.innerHTML = state.currentFotos.map((src, i) => `
@@ -1272,7 +1385,7 @@ function renderPhotoPreviews(){
     renderPhotoPreviews();
   }));
 }
-
+ 
 /* ---- guardar ficha ---- */
 document.getElementById('btnSaveFicha').addEventListener('click', () => {
   const tipoDano = document.getElementById('f_tipoDano').value;
@@ -1280,35 +1393,42 @@ document.getElementById('btnSaveFicha').addEventListener('click', () => {
   const pr = document.getElementById('f_pr').value.trim();
   const tipologia = document.getElementById('f_tipologia').value;
   const danoLargo = document.getElementById('f_danoLargo').value;
-
+ 
   if (!via || !pr || !tipologia || danoLargo === ''){
     alert('Por favor completa los campos obligatorios: Vía, PR, Tipología y Largo del daño.');
     return;
   }
-
+ 
   const fisura = isFisuraTipo(tipoDano);
   const hayReparacion = !!state.hayReparacion;
   const repLargoInput = document.getElementById('f_repLargo').value;
   const repAnchoInput = document.getElementById('f_repAncho').value;
-
+ 
   // Cuando SÍ hay reparación, Largo es obligatorio siempre, y Ancho solo si
   // el tipo de daño no es una fisura (igual que en las dimensiones del daño).
   if (hayReparacion && (repLargoInput === '' || (!fisura && repAnchoInput === ''))){
     alert('Indicaste que sí hay reparación: completa el Largo (y el Ancho, si aplica) de la reparación.');
     return;
   }
-
+ 
   if (state.currentFotos.length < 1){
     if (!confirm('No has añadido ninguna foto. ¿Deseas guardar la ficha sin fotos?')) return;
   }
-
+ 
   const numCalzadas = document.getElementById('f_numCalzadas').value;
-
+ 
+  // Registro múltiple: el PR y las coordenadas se toman del estado del grupo
+  // (fuente de verdad), no de los inputs, para garantizar que TODOS los
+  // documentos guardados en Firestore contengan físicamente los mismos valores.
+  const grupo = !state.editingId ? state.multiRegistro : null;
+  const latInput = document.getElementById('f_lat').value;
+  const lngInput = document.getElementById('f_lng').value;
+ 
   const data = {
     via,
-    pr,
-    lat: document.getElementById('f_lat').value !== '' ? parseFloat(document.getElementById('f_lat').value) : null,
-    lng: document.getElementById('f_lng').value !== '' ? parseFloat(document.getElementById('f_lng').value) : null,
+    pr: grupo ? grupo.pr : pr,
+    lat: grupo ? grupo.lat : (latInput !== '' ? parseFloat(latInput) : null),
+    lng: grupo ? grupo.lng : (lngInput !== '' ? parseFloat(lngInput) : null),
     numCalzadas,
     calzada: numCalzadas === '2' ? document.getElementById('f_calzada').value : null,
     carril: document.getElementById('f_carril').value,
@@ -1323,7 +1443,7 @@ document.getElementById('btnSaveFicha').addEventListener('click', () => {
     comentarios: document.getElementById('f_comentarios').value.trim(),
     fotos: [...state.currentFotos]
   };
-
+ 
   if (state.editingId){
     updateFicha(state.editingId, data);
     closeFichaModal();
@@ -1344,11 +1464,11 @@ document.getElementById('btnSaveFicha').addEventListener('click', () => {
     closeFichaModal();
   }
 });
-
+ 
 /* ========================= FICHA: MODO SOLO VISUALIZACIÓN ========================= */
 let fichaViewCurrentId = null;
 const fichaViewModalOverlay = document.getElementById('fichaViewModalOverlay');
-
+ 
 /**
  * Muestra una ficha técnica completa en modo solo lectura (usada desde el
  * mapa: tanto para un pin individual como al seleccionar un daño dentro del
@@ -1359,16 +1479,16 @@ function openFichaViewModal(id){
   const f = state.fichas.find(x => x.id === id);
   if (!f) return;
   fichaViewCurrentId = id;
-
+ 
   document.getElementById('fichaViewTitle').textContent = f.tipologia || 'Ficha Técnica';
-
+ 
   const fotos = f.fotos || [];
   const hayRep = inferHayReparacion(f);
-
+ 
   document.getElementById('fichaViewBody').innerHTML = `
     <div class="card-title-row" style="margin-bottom:14px; align-items:center;">
       <div>
-        <div class="card-sub">${escapeHtml(tipoAbrev(f.tipoDano))} · Carril ${escapeHtml(f.carril)}${f.calzada ? ' · Calzada ' + escapeHtml(f.calzada) : ''}</div>
+        <div class="card-sub">${escapeHtml(tipoAbrev(f.tipoDano))} · ${escapeHtml(carrilLabel(f))}${f.calzada ? ' · Calzada ' + escapeHtml(f.calzada) : ''}</div>
         <span class="sev-badge sev-${escapeHtml(f.severidad)}" style="margin-top:6px; display:inline-block;">${escapeHtml(f.severidad)}</span>
       </div>
       <div class="pr-post"><span class="cap">PR</span><span class="val">${escapeHtml((f.pr||'').replace(/^PR\s*/i,'')) || '—'}</span></div>
@@ -1391,25 +1511,25 @@ function openFichaViewModal(id){
         ${fotos.map((src, i) => `<div class="${i === 0 ? 'principal' : ''}"><img src="${src}" alt="Foto ${i+1}"/></div>`).join('')}
       </div>` : `<p style="color:var(--text-faint); font-size:12.5px; margin-top:12px;">Sin fotografías registradas.</p>`}
   `;
-
+ 
   fichaViewModalOverlay.classList.add('show');
 }
-
+ 
 function closeFichaViewModal(){
   fichaViewModalOverlay.classList.remove('show');
   fichaViewCurrentId = null;
 }
-
+ 
 document.getElementById('btnCloseFichaViewModal').addEventListener('click', closeFichaViewModal);
 fichaViewModalOverlay.addEventListener('click', e => { if (e.target === fichaViewModalOverlay) closeFichaViewModal(); });
-
+ 
 document.getElementById('btnEditFromView').addEventListener('click', () => {
   const id = fichaViewCurrentId;
   closeFichaViewModal();
   switchTab('fichas');
   openFichaModal(id);
 });
-
+ 
 document.getElementById('btnDeleteFromView').addEventListener('click', () => {
   const id = fichaViewCurrentId;
   if (confirm('¿Eliminar esta ficha técnica? Esta acción no se puede deshacer.')){
@@ -1417,14 +1537,14 @@ document.getElementById('btnDeleteFromView').addEventListener('click', () => {
     closeFichaViewModal();
   }
 });
-
+ 
 /* ========================= EXPORTAR A EXCEL ========================= */
 function getTipologiaCodigo(tipologia){
   if (!tipologia) return '';
   const m = String(tipologia).match(/\(([^)]+)\)\s*$/);
   return m ? m[1] : '';
 }
-
+ 
 /**
  * Toma una fotografía ya almacenada como Base64 (dataURL) en Firestore, la
  * decodifica, y genera una versión redimensionada/comprimida SOLO para el
@@ -1458,13 +1578,13 @@ function loadImageForExcel(dataUrl){
     img.src = dataUrl;
   });
 }
-
+ 
 async function exportToExcel(){
   if (typeof ExcelJS === 'undefined'){
     alert('No se pudo cargar la librería de exportación a Excel. Verifica tu conexión a internet e inténtalo de nuevo.');
     return;
   }
-
+ 
   const list = getFichasConsultadas();
   if (list === null){
     alert('Selecciona una vía en "Vía a consultar" antes de exportar (o elige "Todas las vías" para exportar toda la base de datos).');
@@ -1474,23 +1594,23 @@ async function exportToExcel(){
     alert('No hay fichas que coincidan con la consulta actual para exportar.');
     return;
   }
-
+ 
   const btn = document.getElementById('btnExportExcel');
   const statusEl = document.getElementById('exportStatus');
   const statusLabel = document.getElementById('exportStatusLabel');
   btn.disabled = true;
   statusEl.classList.add('show');
   statusLabel.textContent = 'Preparando exportación…';
-
+ 
   try{
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'InspecVía';
     workbook.created = new Date();
-
+ 
     const sheet = workbook.addWorksheet('Inspección Vial', {
       views: [{ state: 'frozen', ySplit: 1 }]
     });
-
+ 
     sheet.columns = [
       { header:'Vía', key:'via', width:12 },
       { header:'Latitud', key:'lat', width:13 },
@@ -1515,7 +1635,7 @@ async function exportToExcel(){
       { header:'Foto 3', key:'foto3', width:22 },
       { header:'Foto 4', key:'foto4', width:22 }
     ];
-
+ 
     const headerRow = sheet.getRow(1);
     headerRow.eachCell(cell => {
       cell.font = { bold:true, color:{ argb:'FFEAEEF3' } };
@@ -1524,11 +1644,11 @@ async function exportToExcel(){
     });
     headerRow.height = 24;
     sheet.autoFilter = { from: 'A1', to: 'V1' };
-
+ 
     const PHOTO_ROW_HEIGHT_PT = 122; // ~163px de alto, dentro del rango 120-200px pedido
     const PHOTO_COL_INDEX = [18, 19, 20, 21]; // columnas S,T,U,V (0-indexadas) = Foto 1..4
     const PHOTO_COL_LETTERS = ['S','T','U','V'];
-
+ 
     for (let i = 0; i < list.length; i++){
       const f = list[i];
       const rowNumber = i + 2;
@@ -1541,7 +1661,7 @@ async function exportToExcel(){
         numCalzadas: f.numCalzadas || '',
         calzada: f.calzada || '',
         pr: f.pr || '',
-        carril: f.carril || '',
+        carril: carrilLabel(f) === '—' ? '' : carrilLabel(f),
         tipoDano: f.tipoDano || '',
         tipologia: f.tipologia || '',
         codigoTipologia: getTipologiaCodigo(f.tipologia),
@@ -1557,7 +1677,7 @@ async function exportToExcel(){
       row.getCell('comentarios').alignment = { wrapText:true, vertical:'top', horizontal:'left' };
       row.getCell('tipologia').alignment = { wrapText:true, vertical:'top' };
       row.height = PHOTO_ROW_HEIGHT_PT;
-
+ 
       const fotos = f.fotos || [];
       for (let p = 0; p < 4; p++){
         const src = fotos[p];
@@ -1578,22 +1698,22 @@ async function exportToExcel(){
       }
       statusLabel.textContent = `Procesando fotografías… (${i + 1}/${list.length})`;
     }
-
+ 
     statusLabel.textContent = 'Generando archivo Excel…';
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
+ 
     const viaConsulta = document.getElementById('viaConsulta').value;
     const viaLabel = viaConsulta === '__ALL__' ? 'Todas_las_Vias' : viaConsulta;
     const fecha = new Date().toISOString().slice(0, 10);
     const filename = `Inspeccion_Vial_${viaLabel}_${fecha}.xlsx`;
-
+ 
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = filename;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
-
+ 
     statusLabel.textContent = 'Exportación completada.';
     setTimeout(() => statusEl.classList.remove('show'), 2500);
   }catch(err){
@@ -1605,9 +1725,9 @@ async function exportToExcel(){
     btn.disabled = false;
   }
 }
-
+ 
 document.getElementById('btnExportExcel').addEventListener('click', exportToExcel);
-
+ 
 /* ========================= MAPA ========================= */
 function initMap(){
   map = L.map('mapContainer', { zoomControl:true }).setView(ATLANTICO_CENTER, 10);
@@ -1618,11 +1738,11 @@ function initMap(){
   markersLayer = L.layerGroup().addTo(map);
   map.on('click', onMapClick);
 }
-
+ 
 function severityRank(sev){
   return sev === 'Alta' ? 3 : sev === 'Media' ? 2 : sev === 'Baja' ? 1 : 0;
 }
-
+ 
 /**
  * Renderiza los pines del mapa usando L.marker + L.divIcon (elementos HTML
  * independientes), lo que garantiza que el clic siempre corresponde al pin
@@ -1644,9 +1764,9 @@ function severityRank(sev){
 function renderMapMarkers(){
   if (!markersLayer) return;
   markersLayer.clearLayers();
-
+ 
   const valid = getFichasParaMapa().filter(f => f.lat != null && f.lng != null && f.lat !== '' && f.lng !== '' && !isNaN(f.lat) && !isNaN(f.lng));
-
+ 
   const groups = new Map();
   let sinPrContador = 0;
   valid.forEach(f => {
@@ -1655,7 +1775,7 @@ function renderMapMarkers(){
     if (!groups.has(key)) groups.set(key, { pr: prTrim, via: f.via || '', fichas: [] });
     groups.get(key).fichas.push(f);
   });
-
+ 
   groups.forEach(group => {
     const { fichas } = group;
     const first = fichas[0];
@@ -1663,7 +1783,7 @@ function renderMapMarkers(){
     const isGroup = fichas.length > 1;
     const worst = fichas.reduce((a, b) => severityRank(b.severidad) > severityRank(a.severidad) ? b : a, fichas[0]);
     const color = severityColor(worst.severidad);
-
+ 
     const icon = L.divIcon({
       html: `
         <div class="map-pin-tap">
@@ -1676,7 +1796,7 @@ function renderMapMarkers(){
       iconAnchor: [13, 13],
       popupAnchor: [0, -11]
     });
-
+ 
     // bubblingMouseEvents:false evita que el clic sobre el pin también
     // dispare el clic del mapa (usado por el modo "Añadir Pin").
     const marker = L.marker([lat, lng], { icon, bubblingMouseEvents: false });
@@ -1684,7 +1804,7 @@ function renderMapMarkers(){
     marker.addTo(markersLayer);
   });
 }
-
+ 
 /** Popup para un PR con 2 o más daños: lista de selección (no abre edición). */
 function buildGroupPopupHtml(pr, fichas){
   return `
@@ -1697,7 +1817,7 @@ function buildGroupPopupHtml(pr, fichas){
             <span>${escapeHtml(f.tipologia)}</span>
             <span class="meta">
               <span class="sev-badge sev-${escapeHtml(f.severidad)}" style="padding:1px 6px;">${escapeHtml(f.severidad)}</span>
-              Carril ${escapeHtml(f.carril)}
+              ${escapeHtml(carrilLabel(f))}
             </span>
           </div>
         `).join('')}
@@ -1705,7 +1825,7 @@ function buildGroupPopupHtml(pr, fichas){
     </div>
   `;
 }
-
+ 
 /** Popup para un pin individual (único daño en su PR). */
 function buildPopupHtml(f){
   const principal = (f.fotos && f.fotos[0]) || '';
@@ -1713,7 +1833,7 @@ function buildPopupHtml(f){
     <div class="map-popup">
       ${principal ? `<img src="${principal}" alt="Foto principal" />` : ''}
       <h4>${escapeHtml(f.tipologia)}</h4>
-      <div class="row">Vía ${escapeHtml(f.via)} · PR ${escapeHtml(f.pr)} · Carril ${escapeHtml(f.carril)}</div>
+      <div class="row">Vía ${escapeHtml(f.via)} · PR ${escapeHtml(f.pr)} · ${escapeHtml(carrilLabel(f))}</div>
       <div class="row">Severidad: <span class="sev-badge sev-${escapeHtml(f.severidad)}" style="padding:2px 7px;">${escapeHtml(f.severidad)}</span></div>
       <div class="row">Daño: ${f.danoLargo ?? '—'} m ${f.danoAncho ? '× ' + f.danoAncho + ' m' : ''}</div>
       <div class="popup-actions">
@@ -1723,26 +1843,26 @@ function buildPopupHtml(f){
     </div>
   `;
 }
-
+ 
 // Al seleccionar un daño desde el mapa (pin individual o menú de grupo) se
 // abre la ficha en modo SOLO VISUALIZACIÓN, nunca directamente en edición.
 window.viewFichaFromMap = function(id){
   openFichaViewModal(id);
 };
-
+ 
 window.removePin = function(id){
   if (confirm('¿Eliminar este pin del mapa? La ficha técnica no se eliminará, solo sus coordenadas.')){
     updateFicha(id, { lat: null, lng: null });
     map.closePopup();
   }
 };
-
+ 
 function onMapClick(e){
   if (!state.addPinMode) return;
   state.pendingPinLatLng = e.latlng;
   openPinPicker();
 }
-
+ 
 document.getElementById('btnAddPinMode').addEventListener('click', () => {
   state.addPinMode = !state.addPinMode;
   const btn = document.getElementById('btnAddPinMode');
@@ -1752,7 +1872,7 @@ document.getElementById('btnAddPinMode').addEventListener('click', () => {
     ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg> Modo Añadir Pin (activo)`
     : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg> Modo Añadir Pin`;
 });
-
+ 
 /* ---- selector de ficha para pin ---- */
 const pinModalOverlay = document.getElementById('pinModalOverlay');
 function openPinPicker(){
@@ -1767,13 +1887,13 @@ function closePinPicker(){
 document.getElementById('btnClosePinModal').addEventListener('click', closePinPicker);
 pinModalOverlay.addEventListener('click', e => { if (e.target === pinModalOverlay) closePinPicker(); });
 document.getElementById('pinSearchInput').addEventListener('input', renderPinPickerList);
-
+ 
 function renderPinPickerList(){
   const q = document.getElementById('pinSearchInput').value.trim().toLowerCase();
   const list = state.fichas
     .filter(f => !q || `${f.via} ${f.pr} ${f.tipologia}`.toLowerCase().includes(q))
     .sort((a,b) => (a.via||'').localeCompare(b.via||'') || parsePR(a.pr) - parsePR(b.pr));
-
+ 
   const container = document.getElementById('pinPickerList');
   if (!list.length){
     container.innerHTML = `<p style="color:var(--text-dim); font-size:13px; text-align:center; padding:20px 0;">No hay fichas técnicas registradas aún.</p>`;
@@ -1793,7 +1913,7 @@ function renderPinPickerList(){
     });
   });
 }
-
+ 
 /* ========================= ARRANQUE ========================= */
 populateStaticSelects();
 initFirebase();
@@ -1802,3 +1922,4 @@ renderAll();
 </script>
 </body>
 </html>
+ 
