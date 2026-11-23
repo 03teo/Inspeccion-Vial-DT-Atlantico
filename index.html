@@ -261,6 +261,7 @@
   .modal-header{ display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border-soft); }
   .modal-header h2{ margin:0; font-size:15.5px; }
   .modal-body{ padding:20px; max-height:70vh; overflow-y:auto; }
+  #fichaViewBody{ max-height:76vh; }
   .modal-footer{ display:flex; gap:10px; justify-content:flex-end; padding:16px 20px; border-top:1px solid var(--border-soft); }
 
   .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
@@ -271,8 +272,7 @@
   .form-section-title{ grid-column:1/-1; font-size:12px; font-weight:700; color:var(--accent-text); text-transform:uppercase; letter-spacing:.5px; margin:4px 0 -4px; padding-top:8px; border-top:1px solid var(--border-soft); }
   .form-section-title:first-child{ border-top:none; padding-top:0; margin-top:0; }
 
-  .photo-drop{ border:1.5px dashed var(--border); border-radius:var(--radius-sm); padding:16px; text-align:center; cursor:pointer; color:var(--text-dim); font-size:12.5px; transition:.15s; }
-  .photo-drop:hover{ border-color:var(--accent-dim); color:var(--text); }
+  .photo-drop{ border:1.5px dashed var(--border); border-radius:var(--radius-sm); padding:14px; text-align:center; color:var(--text-dim); font-size:12.5px; transition:.15s; }
   .photo-previews{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px; }
   .photo-thumb{ position:relative; aspect-ratio:1; border-radius:6px; overflow:hidden; border:1px solid var(--border); }
   .photo-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
@@ -292,7 +292,7 @@
   .map-popup h4{ margin:0 0 4px; font-size:13.5px; }
   .map-popup .row{ font-size:11.5px; color:var(--text-dim); margin-bottom:2px; }
   .map-popup .popup-actions{ display:flex; gap:6px; margin-top:8px; }
-  .map-pin-mode-active #mapContainer{ cursor:crosshair; outline:2px solid var(--accent); outline-offset:-2px; }
+
 
   /* ---------- pin del mapa (divIcon): punto visual pequeño + área táctil mayor ---------- */
   .map-pin-tap{
@@ -323,10 +323,10 @@
   .view-photos-grid .principal{ position:relative; }
   .view-photos-grid .principal::after{ content:'PRINCIPAL'; position:absolute; bottom:5px; left:5px; background:rgba(16,19,26,.8); color:var(--accent); font-size:9px; font-weight:700; letter-spacing:.3px; padding:2px 5px; border-radius:4px; }
 
-  .picker-list{ max-height:280px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-top:10px; }
-  .picker-item{ display:flex; justify-content:space-between; align-items:center; padding:9px 12px; background:var(--panel-2); border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; font-size:13px; }
-  .picker-item:hover{ border-color:var(--accent-dim); }
-  .picker-item .meta{ font-family:var(--font-mono); font-size:11px; color:var(--text-dim); }
+
+
+
+
 
   footer.app-footer{ text-align:center; padding:22px; color:var(--text-faint); font-size:11.5px; font-family:var(--font-mono); border-top:1px solid var(--border-soft); letter-spacing:.3px; }
 
@@ -369,6 +369,57 @@
   :root[data-theme="light"] .sev-Alta{ color:#c1272d; }
   :root[data-theme="light"] .card-photo .via-badge{ color:#e8ecf2; }
   :root[data-theme="light"] .btn-accent, :root[data-theme="light"] nav.tabs button.active{ color:var(--accent-ink); }
+
+  /* ---------- geolocalización / fotos / cámara / visor / personaje ---------- */
+  .geo-tools{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .geo-source{ display:inline-flex; align-items:center; gap:6px; font-size:11.5px; color:var(--text-dim); background:var(--bg-soft); border:1px solid var(--border); border-radius:999px; padding:3px 10px; }
+  .geo-source::before{ content:''; width:7px; height:7px; border-radius:50%; background:var(--text-faint); flex:none; }
+  .geo-source[data-kind="exif"]::before, .geo-source[data-kind="device"]::before{ background:var(--sev-baja); }
+  .geo-source[data-kind="manual"]::before, .geo-source[data-kind="saved"]::before, .geo-source[data-kind="group"]::before{ background:var(--accent); }
+  .geo-source[data-kind="detecting"]::before{ background:#4aa3ff; animation:geoPulse 1s ease-in-out infinite; }
+  .geo-source[data-kind="denied"]::before, .geo-source[data-kind="unavailable"]::before{ background:var(--sev-alta); }
+  .geo-source[data-kind="none"]{ display:none; }
+  @keyframes geoPulse{ 50%{ opacity:.25; } }
+  .photo-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+  .photo-actions .btn{ flex:1 1 180px; justify-content:center; }
+  .cam-overlay{ z-index:5200; }
+  .cam-stage{ position:relative; background:#000; border-radius:var(--radius-sm); overflow:hidden; display:flex; align-items:center; justify-content:center; min-height:220px; }
+  .cam-stage video, .cam-stage img{ width:100%; max-height:58vh; object-fit:contain; display:block; background:#000; }
+  .cam-msg{ margin-top:10px; font-size:12.5px; color:var(--text-dim); }
+  .cam-msg.err{ color:var(--sev-alta); }
+  .modal.modal-wide{ max-width:980px; }
+  .view-gallery{ display:flex; flex-direction:column; gap:12px; margin-top:16px; }
+  .view-gallery .vg-main, .view-gallery .vg-item{ position:relative; background:var(--bg-soft); border:1px solid var(--border); border-radius:10px; overflow:hidden; display:flex; align-items:center; justify-content:center; cursor:zoom-in; }
+  .view-gallery .vg-main img{ width:100%; height:auto; max-height:62vh; object-fit:contain; display:block; }
+  .view-gallery .vg-rest{ display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:12px; }
+  .view-gallery .vg-item img{ width:100%; height:auto; max-height:46vh; object-fit:contain; display:block; }
+  .view-gallery .vg-tag{ position:absolute; bottom:8px; left:8px; background:rgba(16,19,26,.8); color:var(--accent); font-size:10px; font-weight:700; padding:3px 7px; border-radius:4px; letter-spacing:.4px; pointer-events:none; }
+  .view-gallery .vg-zoom{ position:absolute; top:8px; right:8px; background:rgba(16,19,26,.8); color:#fff; font-size:11px; padding:3px 8px; border-radius:6px; pointer-events:none; }
+  .lightbox{ display:none; position:fixed; inset:0; z-index:6000; background:rgba(4,6,10,.94); align-items:center; justify-content:center; }
+  .lightbox.show{ display:flex; }
+  .lightbox img{ max-width:96vw; max-height:90vh; object-fit:contain; border-radius:4px; }
+  .lightbox .lb-close, .lightbox .lb-nav{ position:absolute; background:rgba(255,255,255,.14); color:#fff; border:none; border-radius:50%; width:44px; height:44px; font-size:22px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .lightbox .lb-close:hover, .lightbox .lb-nav:hover{ background:rgba(255,255,255,.28); }
+  .lightbox .lb-close{ top:16px; right:16px; }
+  .lightbox .lb-prev{ left:16px; top:50%; transform:translateY(-50%); }
+  .lightbox .lb-next{ right:16px; top:50%; transform:translateY(-50%); }
+  .lightbox .lb-count{ position:absolute; bottom:16px; left:50%; transform:translateX(-50%); color:#fff; font-size:12px; background:rgba(0,0,0,.5); padding:4px 12px; border-radius:999px; }
+  .map-loc-controls{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .loc-status{ font-size:12px; color:var(--text-dim); }
+  .loc-status.err{ color:var(--sev-alta); }
+  .loc-status.warn{ color:var(--sev-media); }
+  #btnSeguir[disabled]{ opacity:.45; cursor:not-allowed; }
+  .user-loc{ position:relative; width:44px; height:44px; }
+  .user-loc .ul-arrow{ position:absolute; inset:0; transition:transform .4s ease; }
+  .user-loc .ul-arrow::before{ content:''; position:absolute; left:50%; top:-1px; margin-left:-6px; border-left:6px solid transparent; border-right:6px solid transparent; border-bottom:11px solid #2f80ed; filter:drop-shadow(0 1px 1px rgba(0,0,0,.4)); }
+  .user-loc.no-heading .ul-arrow{ display:none; }
+  .user-loc .ul-body{ position:absolute; left:6px; top:6px; width:32px; height:32px; border-radius:50%; background:#2f80ed; border:3px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; }
+  .user-loc .ul-body svg{ width:20px; height:20px; }
+  .user-loc::after{ content:''; position:absolute; left:6px; top:6px; width:32px; height:32px; border-radius:50%; background:rgba(47,128,237,.45); animation:ulPulse 2s ease-out infinite; pointer-events:none; }
+  .user-loc.stale .ul-body{ background:#7b8494; }
+  .user-loc.stale .ul-arrow::before{ border-bottom-color:#7b8494; }
+  .user-loc.stale::after{ display:none; }
+  @keyframes ulPulse{ from{ transform:scale(1); opacity:.8; } to{ transform:scale(2.3); opacity:0; } }
 </style>
 </head>
 <body>
@@ -483,10 +534,14 @@
           <div class="legend-item"><span class="legend-dot" style="background:var(--sev-media)"></span> Media</div>
           <div class="legend-item"><span class="legend-dot" style="background:var(--sev-alta)"></span> Alta</div>
         </div>
-        <button class="btn" id="btnAddPinMode">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
-          Modo Añadir Pin
-        </button>
+        <div class="map-loc-controls">
+          <button class="btn" id="btnMiUbicacion" type="button" title="Mostrar mi ubicación en tiempo real sobre el mapa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>
+            <span id="btnMiUbicacionLabel">Mi ubicación</span>
+          </button>
+          <button class="btn" id="btnSeguir" type="button" disabled title="Mantener el mapa centrado en mi posición">Seguir</button>
+          <span class="loc-status" id="locStatus"></span>
+        </div>
       </div>
       <div id="mapContainer"></div>
     </section>
@@ -532,6 +587,13 @@
           <div class="form-group">
             <label for="f_lng">Longitud</label>
             <input type="number" step="any" id="f_lng" placeholder="-74.8741" />
+          </div>
+          <div class="form-group full">
+            <div class="geo-tools">
+              <button class="btn btn-sm" type="button" id="btnGeoNow">📍 Usar mi ubicación actual</button>
+              <span class="geo-source" id="f_geoSource" data-kind="none"></span>
+            </div>
+            <span class="hint" style="display:block; margin-top:6px;">Si la foto trae GPS, las coordenadas se toman de ella. Si no, usa tu ubicación actual (solo si estás en el lugar del daño) o escríbelas manualmente.</span>
           </div>
           <div class="form-group">
             <label for="f_numCalzadas">No. de Calzadas</label>
@@ -607,7 +669,11 @@
           <div class="form-group full">
             <div class="photo-drop" id="photoDrop">
               <input type="file" id="f_fotos" accept="image/*" multiple hidden />
-              📷 Haz clic para seleccionar hasta 4 fotos
+              <div class="photo-actions">
+                <button class="btn" type="button" id="btnPickFiles">🖼 Seleccionar desde archivos</button>
+                <button class="btn" type="button" id="btnTakePhoto">📷 Tomar fotografía</button>
+              </div>
+              <div class="hint" style="margin-top:8px;">Hasta 4 fotos en total</div>
             </div>
             <div class="photo-previews" id="photoPreviews"></div>
           </div>
@@ -651,7 +717,11 @@
             <input type="number" step="any" id="countLng" placeholder="-74.812345" />
           </div>
         </div>
-        <span class="hint" style="display:block; margin-top:8px;">Estos tres datos se escriben una sola vez y quedan guardados físicamente en cada daño del grupo.</span>
+        <div class="geo-tools" style="margin-top:10px;">
+          <button class="btn btn-sm" type="button" id="btnCountGeoNow">📍 Usar mi ubicación actual</button>
+          <span class="geo-source" id="countGeoSource" data-kind="none"></span>
+        </div>
+        <span class="hint" style="display:block; margin-top:8px;">Estos tres datos se escriben una sola vez y quedan guardados físicamente en cada daño del grupo. Usa tu ubicación actual solo si estás en el lugar del daño.</span>
       </div>
     </div>
     <div class="modal-footer">
@@ -663,7 +733,7 @@
 
 <!-- ===================== MODAL: FICHA (SOLO VISUALIZACIÓN) ===================== -->
 <div class="modal-overlay" id="fichaViewModalOverlay">
-  <div class="modal">
+  <div class="modal modal-wide">
     <div class="modal-header">
       <h2 id="fichaViewTitle">Ficha Técnica</h2>
       <button class="btn btn-ghost" id="btnCloseFichaViewModal" type="button">✕</button>
@@ -676,18 +746,36 @@
   </div>
 </div>
 
-<!-- ===================== MODAL: PIN PICKER ===================== -->
-<div class="modal-overlay" id="pinModalOverlay">
-  <div class="modal" style="max-width:420px;">
+<!-- ===================== MODAL: CÁMARA ===================== -->
+<div class="modal-overlay cam-overlay" id="camModalOverlay">
+  <div class="modal" style="max-width:640px;">
     <div class="modal-header">
-      <h2>Vincular ficha a este punto</h2>
-      <button class="btn btn-ghost" id="btnClosePinModal" type="button">✕</button>
+      <h2>Tomar fotografía</h2>
+      <button class="btn btn-ghost" id="btnCloseCam" type="button">✕</button>
     </div>
     <div class="modal-body">
-      <input type="text" id="pinSearchInput" placeholder="Buscar ficha por vía o PR…" />
-      <div class="picker-list" id="pinPickerList"></div>
+      <div class="cam-stage">
+        <video id="camVideo" autoplay playsinline muted></video>
+        <img id="camPreview" alt="Vista previa de la fotografía" hidden />
+      </div>
+      <div class="cam-msg" id="camMsg">Iniciando cámara…</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" type="button" id="btnCamCancel">Cancelar</button>
+      <button class="btn" type="button" id="btnCamRetake" style="display:none;">Tomar de nuevo</button>
+      <button class="btn btn-accent" type="button" id="btnCamShot" disabled>📸 Capturar</button>
+      <button class="btn btn-accent" type="button" id="btnCamUse" style="display:none;">Usar esta foto</button>
     </div>
   </div>
+</div>
+
+<!-- ===================== VISOR AMPLIADO DE FOTOGRAFÍAS ===================== -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Fotografía ampliada">
+  <button class="lb-close" id="lbClose" type="button" aria-label="Cerrar">✕</button>
+  <button class="lb-nav lb-prev" id="lbPrev" type="button" aria-label="Anterior">‹</button>
+  <img id="lbImg" alt="Fotografía ampliada" />
+  <button class="lb-nav lb-next" id="lbNext" type="button" aria-label="Siguiente">›</button>
+  <div class="lb-count" id="lbCount"></div>
 </div>
 
 <script>
@@ -730,8 +818,6 @@ const state = {
   expandedCards: new Set(),
   editingId: null,
   currentFotos: [],
-  addPinMode: false,
-  pendingPinLatLng: null,
   hayReparacion: false,
   multiRegistro: null // { total, current, pr } cuando se registran varios daños del mismo PR
 };
@@ -914,6 +1000,137 @@ function compressImage(file){
   });
 }
 
+
+/* ========================= EXIF GPS (se lee ANTES de comprimir) ========================= */
+/**
+ * Lee las coordenadas GPS de los metadatos EXIF de un JPEG (GPSLatitude,
+ * GPSLatitudeRef, GPSLongitude, GPSLongitudeRef) y las convierte de
+ * grados/minutos/segundos a grados decimales (S y W → negativos).
+ * No modifica el archivo. Devuelve {lat,lng} o null si no hay GPS válido.
+ */
+async function readExifGps(file){
+  try{
+    const buf = await file.slice(0, 262144).arrayBuffer();
+    const v = new DataView(buf);
+    if (v.byteLength < 4 || v.getUint16(0) !== 0xFFD8) return null; // no es JPEG
+    let off = 2;
+    while (off + 4 <= v.byteLength){
+      if (v.getUint8(off) !== 0xFF) break;
+      const marker = v.getUint8(off + 1);
+      if (marker === 0xDA || marker === 0xD9) break;
+      const len = v.getUint16(off + 2);
+      if (marker === 0xE1 && off + 10 <= v.byteLength && v.getUint32(off + 4) === 0x45786966){ // "Exif"
+        return parseExifGps(v, off + 10);
+      }
+      off += 2 + len;
+    }
+  }catch(e){ console.warn('EXIF no legible:', e); }
+  return null;
+}
+
+function parseExifGps(v, tiff){
+  const little = v.getUint16(tiff) === 0x4949;
+  const u16 = o => v.getUint16(tiff + o, little);
+  const u32 = o => v.getUint32(tiff + o, little);
+  if (u16(2) !== 0x002A) return null;
+
+  const readIfd = ifdOff => {
+    const tags = {};
+    const n = u16(ifdOff);
+    for (let i = 0; i < n; i++){
+      const e = ifdOff + 2 + i * 12;
+      tags[u16(e)] = { type: u16(e + 2), count: u32(e + 4), valOff: e + 8 };
+    }
+    return tags;
+  };
+  const ifd0 = readIfd(u32(4));
+  if (!ifd0[0x8825]) return null; // sin GPSInfo
+  const gps = readIfd(u32(ifd0[0x8825].valOff));
+
+  const readAscii = t => t ? String.fromCharCode(v.getUint8(tiff + (t.count > 4 ? u32(t.valOff) : t.valOff))) : '';
+  const readRationals = t => {
+    if (!t || t.type !== 5 || t.count < 3) return null;
+    const base = u32(t.valOff);
+    const out = [];
+    for (let i = 0; i < 3; i++){
+      const num = u32(base + i * 8), den = u32(base + i * 8 + 4);
+      out.push(den ? num / den : 0);
+    }
+    return out;
+  };
+
+  const latDMS = readRationals(gps[2]), lngDMS = readRationals(gps[4]);
+  if (!latDMS || !lngDMS) return null;
+  const latRef = readAscii(gps[1]).toUpperCase(), lngRef = readAscii(gps[3]).toUpperCase();
+  let lat = latDMS[0] + latDMS[1] / 60 + latDMS[2] / 3600;
+  let lng = lngDMS[0] + lngDMS[1] / 60 + lngDMS[2] / 3600;
+  if (latRef === 'S') lat = -lat;
+  if (lngRef === 'W') lng = -lng;
+  if (!isValidCoord(lat, lng) || (lat === 0 && lng === 0)) return null;
+  return { lat: +lat.toFixed(6), lng: +lng.toFixed(6) };
+}
+
+/* ========================= GEOLOCALIZACIÓN DEL DISPOSITIVO ========================= */
+function isValidCoord(lat, lng){
+  return typeof lat === 'number' && typeof lng === 'number' && isFinite(lat) && isFinite(lng)
+    && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+}
+
+/** Promesa sobre getCurrentPosition (alta precisión, 15 s). Rechaza con {kind, message}. */
+function getDevicePosition(){
+  return new Promise((resolve, reject) => {
+    if (!('geolocation' in navigator)){
+      reject({ kind: 'unavailable', message: 'Este dispositivo o navegador no admite geolocalización.' });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: +pos.coords.latitude.toFixed(6), lng: +pos.coords.longitude.toFixed(6), accuracy: pos.coords.accuracy }),
+      err => reject(geoErrorInfo(err)),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  });
+}
+
+function geoErrorInfo(err){
+  if (err && err.code === 1) return { kind: 'denied', message: 'Permiso de ubicación denegado. Ingresa las coordenadas manualmente.' };
+  if (err && err.code === 3) return { kind: 'unavailable', message: 'Se agotó el tiempo de espera del GPS. Inténtalo de nuevo o ingresa las coordenadas manualmente.' };
+  return { kind: 'unavailable', message: 'Ubicación no disponible (señal GPS débil o error del dispositivo). Ingresa las coordenadas manualmente.' };
+}
+
+/** Indicador discreto del origen de las coordenadas. */
+function setGeoBadge(badgeId, kind, detail){
+  const el = document.getElementById(badgeId);
+  if (!el) return;
+  const labels = {
+    exif: 'GPS de la fotografía',
+    device: 'Ubicación actual del dispositivo',
+    manual: 'Ingreso manual',
+    detecting: 'Detectando ubicación…',
+    unavailable: 'Ubicación no disponible',
+    denied: 'Permiso de ubicación denegado',
+    group: 'Coordenadas comunes del grupo',
+    saved: 'Coordenadas registradas',
+    none: ''
+  };
+  el.dataset.kind = kind || 'none';
+  el.textContent = (labels[kind] || '') + (detail ? ' · ' + detail : '');
+}
+function geoBadgeKind(badgeId){ return document.getElementById(badgeId)?.dataset.kind || 'none'; }
+
+/** Botón «Usar mi ubicación actual»: pide confirmación y rellena lat/lng. */
+async function useDeviceLocation(latEl, lngEl, badgeId){
+  if (!confirm('Se usará tu ubicación actual como ubicación del daño.\n\n¿Te encuentras en el lugar del daño en este momento?')) return;
+  setGeoBadge(badgeId, 'detecting');
+  try{
+    const pos = await getDevicePosition();
+    latEl.value = pos.lat; lngEl.value = pos.lng;
+    setGeoBadge(badgeId, 'device', `±${Math.round(pos.accuracy)} m`);
+  }catch(e){
+    setGeoBadge(badgeId, e.kind, e.kind === 'denied' ? '' : '');
+    alert(e.message);
+  }
+}
+
 /* ========================= TABS ========================= */
 function switchTab(tabName){
   document.querySelectorAll('.tab-btn').forEach(b => {
@@ -923,6 +1140,7 @@ function switchTab(tabName){
   });
   document.getElementById('view-fichas').classList.toggle('active', tabName === 'fichas');
   document.getElementById('view-mapa').classList.toggle('active', tabName === 'mapa');
+  if (tabName !== 'mapa' && typeof stopLocationTracking === 'function') stopLocationTracking();
   if (tabName === 'mapa'){
     setTimeout(() => { if (map) map.invalidateSize(); }, 50);
   }
@@ -1191,7 +1409,7 @@ function buildCardNode(f){
           ${expanded ? 'Ocultar fotos ▲' : `Ver ${extras.length} foto(s) más ▼`}
         </button>
         <div class="mosaic ${expanded ? 'show' : ''}">
-          ${extras.map(src => `<img src="${src}" alt="Foto adicional" />`).join('')}
+          ${extras.map((src, i) => `<img src="${src}" alt="Foto adicional" data-lb="${f.id}" data-lbi="${i+1}" />`).join('')}
         </div>` : ''}
       <div class="card-actions">
         <button class="btn btn-sm" data-action="edit" data-id="${f.id}">✎ Editar</button>
@@ -1203,6 +1421,12 @@ function buildCardNode(f){
 }
 
 document.getElementById('cardsGrid').addEventListener('click', e => {
+  const thumb = e.target.closest('img[data-lb]');
+  if (thumb){
+    const ficha = state.fichas.find(x => x.id === thumb.dataset.lb);
+    if (ficha) openLightbox(ficha.fotos || [], parseInt(thumb.dataset.lbi, 10));
+    return;
+  }
   const btn = e.target.closest('[data-action]');
   if (!btn) return;
   const { action, id } = btn.dataset;
@@ -1250,6 +1474,10 @@ function openFichaModal(id){
   latField.readOnly = !!multi;
   lngField.readOnly = !!multi;
   document.getElementById('f_grupoComunHint').style.display = multi ? 'block' : 'none';
+  // Origen de las coordenadas: grupo (compartidas), registro existente (se conservan) o nuevo (sin detectar).
+  const hasSavedCoords = f && f.lat != null && f.lat !== '' && f.lng != null && f.lng !== '';
+  setGeoBadge('f_geoSource', multi ? 'group' : (hasSavedCoords ? 'saved' : 'none'));
+  document.getElementById('btnGeoNow').style.display = multi ? 'none' : '';
 
   document.getElementById('f_numCalzadas').value = f?.numCalzadas || '1';
   document.getElementById('f_calzadaGroup').style.display = (f?.numCalzadas === '2' || f?.numCalzadas === 2) ? 'flex' : 'none';
@@ -1304,6 +1532,7 @@ function openFichaModal(id){
 }
 
 function closeFichaModal(){
+  stopCamera();
   fichaModalOverlay.classList.remove('show');
   state.editingId = null;
   state.currentFotos = [];
@@ -1336,6 +1565,7 @@ document.getElementById('btnAddFicha').addEventListener('click', () => {
   document.getElementById('countPr').value = '';
   document.getElementById('countLat').value = '';
   document.getElementById('countLng').value = '';
+  setGeoBadge('countGeoSource', 'none');   // coordenadas del grupo anterior nunca se reutilizan
   document.getElementById('countPrGroup').style.display = 'none';
   document.getElementById('countModalOverlay').classList.add('show');
 });
@@ -1380,6 +1610,10 @@ document.getElementById('btnContinueCount').addEventListener('click', () => {
       alert('Ingresa una latitud y una longitud válidas para el grupo. Se guardarán en cada uno de los daños.');
       return;
     }
+    if (!isValidCoord(lat, lng)){
+      alert('Coordenadas fuera de rango: la latitud debe estar entre -90 y 90 y la longitud entre -180 y 180.');
+      return;
+    }
 
     // Fuente de verdad del grupo: estos valores (no los inputs del formulario)
     // son los que se escriben en cada documento de Firestore.
@@ -1391,19 +1625,172 @@ document.getElementById('btnContinueCount').addEventListener('click', () => {
 
 /* ---- fotos ---- */
 const photoDrop = document.getElementById('photoDrop');
-photoDrop.addEventListener('click', () => document.getElementById('f_fotos').click());
+document.getElementById('btnPickFiles').addEventListener('click', () => document.getElementById('f_fotos').click());
 document.getElementById('f_fotos').addEventListener('change', async e => {
   const remaining = 4 - state.currentFotos.length;
   const files = Array.from(e.target.files).slice(0, Math.max(remaining, 0));
+  e.target.value = '';
+  await addPhotoFiles(files, null);
+});
+
+/**
+ * Flujo único para fotos de archivo y de cámara: 1) lee EXIF GPS del archivo
+ * original, 2) comprime con compressImage (sin cambios), 3) guarda Base64 en
+ * state.currentFotos y 4) decide la ubicación del daño.
+ * geoPromise (solo cámara): promesa de la posición del dispositivo en el momento de captura.
+ */
+async function addPhotoFiles(files, geoPromise){
+  let exifPos = null;
   for (const file of files){
     try{
+      if (!exifPos) exifPos = await readExifGps(file);   // antes de comprimir
       const dataUrl = await compressImage(file);
       state.currentFotos.push(dataUrl);
     }catch(err){ console.error(err); }
   }
   renderPhotoPreviews();
-  e.target.value = '';
+  await applyPhotoLocation(exifPos, geoPromise, files.length > 0);
+}
+
+/**
+ * Prioridad: 1) EXIF válido de la foto, 2) ubicación del dispositivo SOLO si la
+ * foto se tomó desde la app, 3) ingreso manual. Nunca se asigna la ubicación
+ * actual a una foto de archivo, ni se tocan registros en edición o grupos.
+ */
+async function applyPhotoLocation(exifPos, geoPromise, hadFiles){
+  if (state.editingId || state.multiRegistro) return;     // edición / grupo: coordenadas intactas
+  const latEl = document.getElementById('f_lat'), lngEl = document.getElementById('f_lng');
+  const hasValues = latEl.value !== '' || lngEl.value !== '';
+  const kind = geoBadgeKind('f_geoSource');
+  const manualLocked = hasValues && kind === 'manual';
+
+  if (exifPos){
+    if (manualLocked){
+      const same = Math.abs(parseFloat(latEl.value) - exifPos.lat) < 1e-6 && Math.abs(parseFloat(lngEl.value) - exifPos.lng) < 1e-6;
+      if (!same && !confirm('La fotografía contiene coordenadas GPS distintas a las que escribiste.\n¿Deseas reemplazarlas por las de la foto?')) return;
+    } else if (hasValues && (kind === 'exif' || kind === 'device')) {
+      return; // ya se fijó la ubicación con una foto anterior (la primera manda)
+    }
+    latEl.value = exifPos.lat; lngEl.value = exifPos.lng;
+    setGeoBadge('f_geoSource', 'exif');
+    return;
+  }
+
+  if (geoPromise){
+    if (hasValues && (kind === 'manual' || kind === 'exif' || kind === 'device')) { geoPromise.catch(() => {}); return; }
+    setGeoBadge('f_geoSource', 'detecting');
+    try{
+      const pos = await geoPromise;
+      latEl.value = pos.lat; lngEl.value = pos.lng;
+      setGeoBadge('f_geoSource', 'device', `±${Math.round(pos.accuracy)} m`);
+    }catch(e){
+      setGeoBadge('f_geoSource', e.kind || 'unavailable');
+      alert(e.message || 'No se pudo obtener la ubicación. Ingresa las coordenadas manualmente.');
+    }
+    return;
+  }
+
+  if (hadFiles && !hasValues){
+    setGeoBadge('f_geoSource', 'unavailable', 'la foto no trae GPS');
+  }
+}
+
+/* ---- coordenadas: indicador de origen y validación ---- */
+['f_lat','f_lng'].forEach(id => document.getElementById(id).addEventListener('input', () => {
+  const any = document.getElementById('f_lat').value !== '' || document.getElementById('f_lng').value !== '';
+  setGeoBadge('f_geoSource', any ? 'manual' : 'none');
+}));
+['countLat','countLng'].forEach(id => document.getElementById(id).addEventListener('input', () => {
+  const any = document.getElementById('countLat').value !== '' || document.getElementById('countLng').value !== '';
+  setGeoBadge('countGeoSource', any ? 'manual' : 'none');
+}));
+document.getElementById('btnGeoNow').addEventListener('click', () =>
+  useDeviceLocation(document.getElementById('f_lat'), document.getElementById('f_lng'), 'f_geoSource'));
+document.getElementById('btnCountGeoNow').addEventListener('click', () =>
+  useDeviceLocation(document.getElementById('countLat'), document.getElementById('countLng'), 'countGeoSource'));
+
+/* ---- cámara dentro de la app ---- */
+const camOverlay = document.getElementById('camModalOverlay');
+const camVideo = document.getElementById('camVideo');
+const camPreview = document.getElementById('camPreview');
+const camMsg = document.getElementById('camMsg');
+let camStream = null, camBlob = null, camGeoPromise = null;
+
+function camSetMsg(text, isErr){ camMsg.textContent = text; camMsg.classList.toggle('err', !!isErr); }
+function camShowLive(live){
+  camVideo.hidden = !live; camPreview.hidden = live;
+  document.getElementById('btnCamShot').style.display = live ? '' : 'none';
+  document.getElementById('btnCamRetake').style.display = live ? 'none' : '';
+  document.getElementById('btnCamUse').style.display = live ? 'none' : '';
+}
+function stopCamera(){
+  if (camStream){ camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+  camVideo.srcObject = null;
+  camOverlay.classList.remove('show');
+  if (camPreview.src && camPreview.src.startsWith('blob:')) URL.revokeObjectURL(camPreview.src);
+  camPreview.removeAttribute('src');
+  camBlob = null;
+}
+async function startCameraStream(){
+  camShowLive(true);
+  document.getElementById('btnCamShot').disabled = true;
+  camSetMsg('Iniciando cámara…');
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    camSetMsg('Este navegador o conexión no permite usar la cámara (se requiere HTTPS). Cierra esta ventana y usa «Seleccionar desde archivos».', true);
+    return;
+  }
+  try{
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1440 } }, audio: false });
+    camVideo.srcObject = camStream;
+    await camVideo.play().catch(() => {});
+    document.getElementById('btnCamShot').disabled = false;
+    camSetMsg('Encuadra el daño y pulsa «Capturar».');
+  }catch(err){
+    const denied = err && (err.name === 'NotAllowedError' || err.name === 'SecurityError');
+    camSetMsg(denied
+      ? 'Permiso de cámara denegado. Cierra esta ventana y usa «Seleccionar desde archivos».'
+      : 'No se pudo acceder a la cámara del dispositivo. Cierra esta ventana y usa «Seleccionar desde archivos».', true);
+  }
+}
+document.getElementById('btnTakePhoto').addEventListener('click', () => {
+  if (state.currentFotos.length >= 4){ alert('Ya agregaste el máximo de 4 fotos.'); return; }
+  camOverlay.classList.add('show');
+  camGeoPromise = null;
+  // Calienta el permiso/fix GPS mientras se abre la cámara (solo para registros nuevos individuales).
+  if (!state.editingId && !state.multiRegistro) getDevicePosition().catch(() => {});
+  startCameraStream();
 });
+document.getElementById('btnCamShot').addEventListener('click', () => {
+  if (!camStream || !camVideo.videoWidth) return;
+  // Se pide la ubicación en el instante de la captura.
+  camGeoPromise = (!state.editingId && !state.multiRegistro) ? getDevicePosition() : null;
+  if (camGeoPromise) camGeoPromise.catch(() => {});
+  const c = document.createElement('canvas');
+  c.width = camVideo.videoWidth; c.height = camVideo.videoHeight;
+  c.getContext('2d').drawImage(camVideo, 0, 0, c.width, c.height);
+  c.toBlob(blob => {
+    if (!blob){ camSetMsg('No se pudo capturar la imagen. Inténtalo de nuevo.', true); return; }
+    camBlob = blob;
+    camPreview.src = URL.createObjectURL(blob);
+    camShowLive(false);
+    camSetMsg('Revisa la fotografía: confírmala o tómala de nuevo.');
+  }, 'image/jpeg', 0.92);
+});
+document.getElementById('btnCamRetake').addEventListener('click', () => {
+  if (camPreview.src && camPreview.src.startsWith('blob:')) URL.revokeObjectURL(camPreview.src);
+  camPreview.removeAttribute('src'); camBlob = null; camGeoPromise = null;
+  camShowLive(true);
+  camSetMsg(camStream ? 'Encuadra el daño y pulsa «Capturar».' : 'La cámara no está activa.');
+});
+document.getElementById('btnCamUse').addEventListener('click', async () => {
+  if (!camBlob) return;
+  const file = new File([camBlob], `captura_${Date.now()}.jpg`, { type: 'image/jpeg' });
+  const geo = camGeoPromise;
+  stopCamera();
+  await addPhotoFiles([file], geo);
+});
+document.getElementById('btnCloseCam').addEventListener('click', stopCamera);
+document.getElementById('btnCamCancel').addEventListener('click', stopCamera);
 
 function renderPhotoPreviews(){
   const wrap = document.getElementById('photoPreviews');
@@ -1458,6 +1845,13 @@ document.getElementById('btnSaveFicha').addEventListener('click', () => {
   const grupo = !state.editingId ? state.multiRegistro : null;
   const latInput = document.getElementById('f_lat').value;
   const lngInput = document.getElementById('f_lng').value;
+  if (!grupo && (latInput !== '' || lngInput !== '')){
+    const la = parseFloat(latInput), lo = parseFloat(lngInput);
+    if (latInput === '' || lngInput === '' || !isValidCoord(la, lo)){
+      alert('Coordenadas no válidas: ingresa latitud y longitud completas (latitud entre -90 y 90, longitud entre -180 y 180) o deja ambas vacías.');
+      return;
+    }
+  }
 
   const data = {
     via,
@@ -1502,6 +1896,7 @@ document.getElementById('btnSaveFicha').addEventListener('click', () => {
 
 /* ========================= FICHA: MODO SOLO VISUALIZACIÓN ========================= */
 let fichaViewCurrentId = null;
+let viewPhotos = [];
 const fichaViewModalOverlay = document.getElementById('fichaViewModalOverlay');
 
 /**
@@ -1542,10 +1937,17 @@ function openFichaViewModal(id){
         <dd>${escapeHtml(f.comentarios)}</dd>
       </dl>` : ''}
     ${fotos.length ? `
-      <div class="view-photos-grid">
-        ${fotos.map((src, i) => `<div class="${i === 0 ? 'principal' : ''}"><img src="${src}" alt="Foto ${i+1}"/></div>`).join('')}
+      <div class="view-gallery">
+        <div class="vg-main" data-photo="0">
+          <img src="${fotos[0]}" alt="Foto principal" />
+          <span class="vg-tag">PRINCIPAL</span><span class="vg-zoom">🔍 Ampliar</span>
+        </div>
+        ${fotos.length > 1 ? `<div class="vg-rest">
+          ${fotos.slice(1).map((src, i) => `<div class="vg-item" data-photo="${i+1}"><img src="${src}" alt="Foto ${i+2}" /><span class="vg-zoom">🔍 Ampliar</span></div>`).join('')}
+        </div>` : ''}
       </div>` : `<p style="color:var(--text-faint); font-size:12.5px; margin-top:12px;">Sin fotografías registradas.</p>`}
   `;
+  viewPhotos = fotos;
 
   fichaViewModalOverlay.classList.add('show');
 }
@@ -1556,6 +1958,38 @@ function closeFichaViewModal(){
 }
 
 document.getElementById('btnCloseFichaViewModal').addEventListener('click', closeFichaViewModal);
+
+/* ---- visor ampliado de fotografías (ficha y mosaico de tarjetas) ---- */
+const lightbox = document.getElementById('lightbox');
+let lbList = [], lbIdx = 0;
+function lbRender(){
+  document.getElementById('lbImg').src = lbList[lbIdx];
+  document.getElementById('lbCount').textContent = `${lbIdx + 1} / ${lbList.length}`;
+  const multi = lbList.length > 1;
+  document.getElementById('lbPrev').style.display = multi ? '' : 'none';
+  document.getElementById('lbNext').style.display = multi ? '' : 'none';
+  document.getElementById('lbCount').style.display = multi ? '' : 'none';
+}
+function openLightbox(list, idx){
+  if (!list || !list.length) return;
+  lbList = list; lbIdx = Math.min(Math.max(idx || 0, 0), list.length - 1);
+  lbRender(); lightbox.classList.add('show');
+}
+function closeLightbox(){ lightbox.classList.remove('show'); document.getElementById('lbImg').removeAttribute('src'); }
+document.getElementById('lbClose').addEventListener('click', closeLightbox);
+document.getElementById('lbPrev').addEventListener('click', e => { e.stopPropagation(); lbIdx = (lbIdx - 1 + lbList.length) % lbList.length; lbRender(); });
+document.getElementById('lbNext').addEventListener('click', e => { e.stopPropagation(); lbIdx = (lbIdx + 1) % lbList.length; lbRender(); });
+lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+document.addEventListener('keydown', e => {
+  if (!lightbox.classList.contains('show')) return;
+  if (e.key === 'Escape') closeLightbox();
+  else if (e.key === 'ArrowLeft' && lbList.length > 1) document.getElementById('lbPrev').click();
+  else if (e.key === 'ArrowRight' && lbList.length > 1) document.getElementById('lbNext').click();
+});
+document.getElementById('fichaViewBody').addEventListener('click', e => {
+  const el = e.target.closest('[data-photo]');
+  if (el) openLightbox(viewPhotos, parseInt(el.dataset.photo, 10));
+});
 fichaViewModalOverlay.addEventListener('click', e => { if (e.target === fichaViewModalOverlay) closeFichaViewModal(); });
 
 document.getElementById('btnEditFromView').addEventListener('click', () => {
@@ -1574,6 +2008,21 @@ document.getElementById('btnDeleteFromView').addEventListener('click', () => {
 });
 
 /* ========================= EXPORTAR A EXCEL ========================= */
+/**
+ * Texto de la columna «Carril» en el Excel. En tramos de DOS calzadas combina
+ * calzada y carril ("Calzada derecha - Carril 1"); si la calzada no quedó
+ * registrada no se inventa. En una calzada se conserva carrilLabel() tal cual.
+ */
+function carrilExcelLabel(f){
+  const base = carrilLabel(f);
+  if (base === '—') return '';
+  const calzada = f?.calzada != null ? String(f.calzada).trim() : '';
+  const num = f?.numCalzadas != null && f.numCalzadas !== '' ? String(f.numCalzadas) : '';
+  const esDos = num === '2' || (num === '' && calzada !== '');
+  if (esDos && calzada) return `Calzada ${calzada.toLowerCase()} - ${base}`;
+  return base;
+}
+
 function getTipologiaCodigo(tipologia){
   if (!tipologia) return '';
   const m = String(tipologia).match(/\(([^)]+)\)\s*$/);
@@ -1649,7 +2098,7 @@ async function exportToExcel(){
     // Estructura (encabezados jerárquicos de 3 filas, igual a la plantilla de inspección):
     // A=PR | B=Carril | C=Tipo | D=Sever | E-F=Daño (Largo, Ancho) | G-H=Reparación (Largo, Ancho) | I=Foto | J=Aclaraciones
     // La banda "PATOLOGÍA" agrupa Carril…Foto. No hay columnas adicionales.
-    const COL_WIDTHS = [13, 17, 34, 11, 11, 11, 11, 11, 38, 42];
+    const COL_WIDTHS = [13, 38, 34, 11, 11, 11, 11, 11, 38, 42];
     COL_WIDTHS.forEach((w, i) => { sheet.getColumn(i + 1).width = w; });
 
     const HEADERS = [
@@ -1704,7 +2153,7 @@ async function exportToExcel(){
 
       const valores = [
         f.pr || '',
-        carrilLabel(f) === '—' ? '' : carrilLabel(f),
+        carrilExcelLabel(f),
         f.tipologia || f.tipoDano || '',
         f.severidad || '',
         num(f.danoLargo),
@@ -1799,8 +2248,173 @@ function initMap(){
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
   }).addTo(map);
   markersLayer = L.layerGroup().addTo(map);
-  map.on('click', onMapClick);
+  // Si el usuario arrastra el mapa manualmente, se desactiva el seguimiento para que pueda explorar.
+  map.on('dragstart', () => { if (userLoc.following){ userLoc.following = false; locUpdateButtons(); } });
 }
+
+
+/* ========================= UBICACIÓN DEL USUARIO EN TIEMPO REAL ========================= */
+/* Indicador temporal de orientación: NO se guarda en Firestore ni modifica
+   coordenadas de daños. Vive en un pane propio (por debajo de los pines). */
+const userLoc = {
+  watchId: null, marker: null, circle: null, following: false,
+  last: null,          // {lat,lng,accuracy,time}
+  heading: null, anchor: null, staleTimer: null, anim: null, firstFix: true
+};
+const USER_ICON_SVG = '<svg viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="5.5" r="3"/><path d="M12 9.5c-3 0-4.5 1.6-4.5 3.8V16h2v5.5h5V16h2v-2.7c0-2.2-1.5-3.8-4.5-3.8z"/></svg>';
+
+function locSetStatus(text, cls){
+  const el = document.getElementById('locStatus');
+  el.textContent = text || '';
+  el.className = 'loc-status' + (cls ? ' ' + cls : '');
+}
+function locUpdateButtons(){
+  const on = userLoc.watchId !== null;
+  const btn = document.getElementById('btnMiUbicacion');
+  btn.classList.toggle('btn-accent', on);
+  document.getElementById('btnMiUbicacionLabel').textContent = on ? 'Detener ubicación' : 'Mi ubicación';
+  const f = document.getElementById('btnSeguir');
+  f.disabled = !on;
+  f.classList.toggle('btn-accent', on && userLoc.following);
+  f.textContent = userLoc.following ? 'Siguiendo' : 'Seguir';
+}
+
+function distMeters(a, b){
+  const R = 6371000, rad = x => x * Math.PI / 180;
+  const dLat = rad(b.lat - a.lat), dLng = rad(b.lng - a.lng);
+  const h = Math.sin(dLat/2)**2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+function bearingDeg(a, b){
+  const rad = x => x * Math.PI / 180, deg = x => x * 180 / Math.PI;
+  const y = Math.sin(rad(b.lng - a.lng)) * Math.cos(rad(b.lat));
+  const x = Math.cos(rad(a.lat)) * Math.sin(rad(b.lat)) - Math.sin(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.cos(rad(b.lng - a.lng));
+  return (deg(Math.atan2(y, x)) + 360) % 360;
+}
+
+function userLocEnsureMarker(lat, lng){
+  if (userLoc.marker) return;
+  if (!map.getPane('userPane')){ map.createPane('userPane'); map.getPane('userPane').style.zIndex = 590; } // bajo los pines (600)
+  const icon = L.divIcon({
+    html: `<div class="user-loc no-heading" id="userLocEl"><div class="ul-arrow" id="userLocArrow"></div><div class="ul-body">${USER_ICON_SVG}</div></div>`,
+    className: '', iconSize: [44, 44], iconAnchor: [22, 22]
+  });
+  userLoc.marker = L.marker([lat, lng], { icon, pane: 'userPane', interactive: false, keyboard: false }).addTo(map);
+  userLoc.circle = L.circle([lat, lng], { radius: 10, pane: 'userPane', interactive: false, color: '#2f80ed', weight: 1, fillColor: '#2f80ed', fillOpacity: .12 }).addTo(map);
+}
+
+function userLocMoveTo(lat, lng){
+  // Interpolación suave (evita saltos visuales entre fixes).
+  if (userLoc.anim) cancelAnimationFrame(userLoc.anim);
+  const from = userLoc.marker.getLatLng(), t0 = performance.now(), dur = 700;
+  const step = now => {
+    const k = Math.min((now - t0) / dur, 1);
+    const la = from.lat + (lat - from.lat) * k, lo = from.lng + (lng - from.lng) * k;
+    userLoc.marker.setLatLng([la, lo]); userLoc.circle.setLatLng([la, lo]);
+    if (k < 1) userLoc.anim = requestAnimationFrame(step);
+  };
+  userLoc.anim = requestAnimationFrame(step);
+}
+
+function userLocOnPosition(pos){
+  const c = pos.coords;
+  const cur = { lat: c.latitude, lng: c.longitude, accuracy: c.accuracy || 0, time: Date.now() };
+  const prev = userLoc.last;
+  userLoc.last = cur;
+  userLocEnsureMarker(cur.lat, cur.lng);
+  document.getElementById('userLocEl')?.classList.remove('stale');
+
+  // Filtro de vibración del GPS: si el desplazamiento es menor que el ruido, no se mueve el personaje.
+  const jitter = prev ? Math.max(3, Math.min(cur.accuracy * 0.35, 15)) : 0;
+  const moved = prev ? distMeters(prev, cur) : 0;
+  if (!prev){
+    userLoc.marker.setLatLng([cur.lat, cur.lng]); userLoc.circle.setLatLng([cur.lat, cur.lng]);
+  } else if (moved >= jitter){
+    userLocMoveTo(cur.lat, cur.lng);
+  } else {
+    cur.lat = prev.lat; cur.lng = prev.lng; userLoc.last = { ...cur };
+  }
+  userLoc.circle.setRadius(Math.max(cur.accuracy, 3));
+
+  // Dirección: solo con movimiento real y precisión suficiente; si no, no se inventa.
+  let hd = null;
+  if (cur.accuracy <= 50){
+    if (Number.isFinite(c.heading) && (c.speed || 0) > 0.7) hd = c.heading;
+    else if (userLoc.anchor && distMeters(userLoc.anchor, cur) >= Math.max(6, cur.accuracy * 0.6)){
+      hd = bearingDeg(userLoc.anchor, cur);
+    }
+  }
+  if (!userLoc.anchor || distMeters(userLoc.anchor, cur) >= Math.max(6, cur.accuracy * 0.6)) userLoc.anchor = { lat: cur.lat, lng: cur.lng };
+  if (hd !== null){
+    userLoc.heading = hd;
+    document.getElementById('userLocEl')?.classList.remove('no-heading');
+    const arrow = document.getElementById('userLocArrow');
+    if (arrow) arrow.style.transform = `rotate(${hd}deg)`;
+  }
+
+  locSetStatus(`Ubicación activa · precisión ±${Math.round(cur.accuracy)} m` + (cur.accuracy > 50 ? ' (señal GPS débil)' : ''), cur.accuracy > 50 ? 'warn' : '');
+
+  if (userLoc.firstFix){
+    userLoc.firstFix = false;
+    map.setView([cur.lat, cur.lng], Math.max(map.getZoom(), 17), { animate: true });
+  } else if (userLoc.following){
+    map.panTo([cur.lat, cur.lng], { animate: true, duration: 0.8, easeLinearity: 0.5 });
+  }
+}
+
+function userLocOnError(err){
+  const info = geoErrorInfo(err);
+  if (err && err.code === 1){
+    stopLocationTracking(true);
+    locSetStatus('Permiso de ubicación denegado: el personaje no podrá actualizar tu posición. Habilita el permiso en el navegador.', 'err');
+    return;
+  }
+  if (err && err.code === 3) locSetStatus('Tiempo de espera agotado; sigo intentando obtener tu ubicación…', 'warn');
+  else locSetStatus('Señal GPS débil o ubicación no disponible; se conserva la última posición conocida.', 'warn');
+  document.getElementById('userLocEl')?.classList.add('stale');
+}
+
+function startLocationTracking(){
+  if (!('geolocation' in navigator)){
+    locSetStatus('Este dispositivo o navegador no admite geolocalización.', 'err');
+    return;
+  }
+  if (userLoc.watchId !== null) return;
+  userLoc.firstFix = true; userLoc.anchor = null; userLoc.heading = null; userLoc.last = null;
+  locSetStatus('Solicitando permiso y buscando señal GPS…');
+  userLoc.watchId = navigator.geolocation.watchPosition(userLocOnPosition, userLocOnError,
+    { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 });
+  userLoc.staleTimer = setInterval(() => {
+    if (userLoc.last && Date.now() - userLoc.last.time > 20000){
+      document.getElementById('userLocEl')?.classList.add('stale');
+      locSetStatus(`Sin actualizaciones hace ${Math.round((Date.now() - userLoc.last.time) / 1000)} s · última posición conocida`, 'warn');
+    }
+  }, 5000);
+  locUpdateButtons();
+}
+
+/** keepMessage: conserva el texto de estado (p. ej. al denegarse el permiso). */
+function stopLocationTracking(keepMessage){
+  if (userLoc.watchId !== null){ navigator.geolocation.clearWatch(userLoc.watchId); userLoc.watchId = null; }
+  if (userLoc.staleTimer){ clearInterval(userLoc.staleTimer); userLoc.staleTimer = null; }
+  if (userLoc.anim){ cancelAnimationFrame(userLoc.anim); userLoc.anim = null; }
+  if (userLoc.marker){ map.removeLayer(userLoc.marker); userLoc.marker = null; }
+  if (userLoc.circle){ map.removeLayer(userLoc.circle); userLoc.circle = null; }
+  userLoc.following = false; userLoc.last = null;
+  if (!keepMessage) locSetStatus('');
+  locUpdateButtons();
+}
+
+document.getElementById('btnMiUbicacion').addEventListener('click', () => {
+  if (userLoc.watchId !== null) stopLocationTracking();
+  else { userLoc.following = true; startLocationTracking(); locUpdateButtons(); }
+});
+document.getElementById('btnSeguir').addEventListener('click', () => {
+  userLoc.following = !userLoc.following;
+  if (userLoc.following && userLoc.last) map.panTo([userLoc.last.lat, userLoc.last.lng], { animate: true });
+  locUpdateButtons();
+});
+locUpdateButtons();
 
 function severityRank(sev){
   return sev === 'Alta' ? 3 : sev === 'Media' ? 2 : sev === 'Baja' ? 1 : 0;
@@ -1860,8 +2474,7 @@ function renderMapMarkers(){
       popupAnchor: [0, -11]
     });
 
-    // bubblingMouseEvents:false evita que el clic sobre el pin también
-    // dispare el clic del mapa (usado por el modo "Añadir Pin").
+    // bubblingMouseEvents:false evita que el clic sobre el pin se propague al mapa.
     const marker = L.marker([lat, lng], { icon, bubblingMouseEvents: false });
     marker.bindPopup(isGroup ? buildGroupPopupHtml(group.pr, fichas) : buildPopupHtml(fichas[0]), { maxWidth: 280 });
     marker.addTo(markersLayer);
@@ -1919,63 +2532,6 @@ window.removePin = function(id){
     map.closePopup();
   }
 };
-
-function onMapClick(e){
-  if (!state.addPinMode) return;
-  state.pendingPinLatLng = e.latlng;
-  openPinPicker();
-}
-
-document.getElementById('btnAddPinMode').addEventListener('click', () => {
-  state.addPinMode = !state.addPinMode;
-  const btn = document.getElementById('btnAddPinMode');
-  btn.classList.toggle('btn-accent', state.addPinMode);
-  document.getElementById('view-mapa').classList.toggle('map-pin-mode-active', state.addPinMode);
-  btn.innerHTML = state.addPinMode
-    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg> Modo Añadir Pin (activo)`
-    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg> Modo Añadir Pin`;
-});
-
-/* ---- selector de ficha para pin ---- */
-const pinModalOverlay = document.getElementById('pinModalOverlay');
-function openPinPicker(){
-  renderPinPickerList();
-  pinModalOverlay.classList.add('show');
-}
-function closePinPicker(){
-  pinModalOverlay.classList.remove('show');
-  state.pendingPinLatLng = null;
-  document.getElementById('pinSearchInput').value = '';
-}
-document.getElementById('btnClosePinModal').addEventListener('click', closePinPicker);
-pinModalOverlay.addEventListener('click', e => { if (e.target === pinModalOverlay) closePinPicker(); });
-document.getElementById('pinSearchInput').addEventListener('input', renderPinPickerList);
-
-function renderPinPickerList(){
-  const q = document.getElementById('pinSearchInput').value.trim().toLowerCase();
-  const list = state.fichas
-    .filter(f => !q || `${f.via} ${f.pr} ${f.tipologia}`.toLowerCase().includes(q))
-    .sort((a,b) => (a.via||'').localeCompare(b.via||'') || parsePR(a.pr) - parsePR(b.pr));
-
-  const container = document.getElementById('pinPickerList');
-  if (!list.length){
-    container.innerHTML = `<p style="color:var(--text-dim); font-size:13px; text-align:center; padding:20px 0;">No hay fichas técnicas registradas aún.</p>`;
-    return;
-  }
-  container.innerHTML = list.map(f => `
-    <div class="picker-item" data-id="${f.id}">
-      <span>${escapeHtml(f.tipologia)}</span>
-      <span class="meta">Vía ${escapeHtml(f.via)} · PR ${escapeHtml(f.pr)}</span>
-    </div>
-  `).join('');
-  container.querySelectorAll('.picker-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const { lat, lng } = state.pendingPinLatLng;
-      updateFicha(item.dataset.id, { lat, lng });
-      closePinPicker();
-    });
-  });
-}
 
 /* ========================= TEMA CLARO / OSCURO ========================= */
 const THEME_KEY = 'inspecvia-theme';
